@@ -52,6 +52,7 @@ const Receipt = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]); // Added filteredProducts state
   const [isLoading, setIsLoading] = useState(true);
 
   const [items, setItems] = useState<ReceiptItem[]>([]);
@@ -83,6 +84,7 @@ const Receipt = () => {
       ]);
       setClients(clientsData);
       setProducts(productsData);
+      setFilteredProducts(productsData); // Initialize filteredProducts
       setIsLoading(false);
     };
 
@@ -245,6 +247,10 @@ const Receipt = () => {
 
   const handlePrintReceipt = () => {
     toast.info("PDF generation will be implemented later");
+  };
+
+  const handleProductSelection = (value: string) => {
+    setSelectedProduct(value);
   };
 
   if (isLoading) {
@@ -454,11 +460,25 @@ const Receipt = () => {
                     <h3 className="font-medium">Product Item</h3>
                     <div className="space-y-2">
                       <Label htmlFor="productSelect">Select Product</Label>
-                      <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                      <Select value={selectedProduct} onValueChange={handleProductSelection}>
                         <SelectTrigger id="productSelect">
                           <SelectValue placeholder="Select a product" />
                         </SelectTrigger>
                         <SelectContent>
+                          <div className="px-3 pb-2">
+                            <Input
+                              placeholder="Search products..."
+                              className="h-8"
+                              onChange={(e) => {
+                                const searchTerm = e.target.value.toLowerCase();
+                                const filtered = products.filter(product =>
+                                  product.name.toLowerCase().includes(searchTerm) ||
+                                  product.price.toString().includes(searchTerm)
+                                );
+                                setFilteredProducts(filtered);
+                              }}
+                            />
+                          </div>
                           {products.map(product => (
                             <SelectItem key={product.id} value={product.id}>
                               {product.name} - ${product.price.toFixed(2)}
