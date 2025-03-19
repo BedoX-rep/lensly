@@ -254,19 +254,13 @@ const Receipt = () => {
     setSelectedProduct(value);
   };
 
-  useEffect(() => {
-    const filterProducts = () => {
-      const searchTerm = productSearchQuery.toLowerCase();
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(searchTerm) ||
-        product.price.toString().includes(searchTerm)
-      );
-      setFilteredProducts(filtered);
-    };
-
-    filterProducts();
-  }, [productSearchQuery, products]);
-
+  const handleProductSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const filtered = products.filter(product =>
+      product.name.toLowerCase().includes(searchTerm)
+    );
+    setFilteredProducts(filtered);
+  };
 
   if (isLoading) {
     return (
@@ -478,9 +472,8 @@ const Receipt = () => {
                       <div className="space-y-2">
                         <Input
                           type="text"
-                          placeholder="Search products..."
-                          value={productSearchQuery}
-                          onChange={(e) => setProductSearchQuery(e.target.value)}
+                          placeholder="Search products by name..."
+                          onChange={handleProductSearch}
                         />
                         <Select value={selectedProduct} onValueChange={handleProductSelection}>
                           <SelectTrigger id="productSelect">
