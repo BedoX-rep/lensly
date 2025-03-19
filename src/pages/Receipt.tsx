@@ -1,3 +1,6 @@
+
+import { generatePDF } from '../lib/pdf';
+
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
@@ -249,8 +252,19 @@ const Receipt = () => {
     }
   };
 
-  const handlePrintReceipt = () => {
-    toast.info("PDF generation will be implemented later");
+  const handlePrintReceipt = async () => {
+    const receiptElement = document.getElementById('receipt-preview');
+    if (!receiptElement) {
+      toast.error("Receipt preview not found");
+      return;
+    }
+    try {
+      await generatePDF(receiptElement, `receipt-${Date.now()}.pdf`);
+      toast.success("Receipt downloaded successfully");
+    } catch (error) {
+      toast.error("Failed to generate PDF");
+      console.error(error);
+    }
   };
 
   const handleProductSelection = (value: string) => {

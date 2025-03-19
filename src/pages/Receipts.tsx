@@ -40,8 +40,74 @@ const Receipts = () => {
     setIsViewDialogOpen(true);
   };
 
-  const handlePrintReceipt = (receiptId: string) => {
-    toast.info(`Printing receipt #${receiptId}`);
+  const handlePrintReceipt = async (id: string) => {
+    try {
+      const receiptDetails = await getReceiptDetails(id);
+      const printElement = document.createElement('div');
+      printElement.innerHTML = `
+        <div style="padding: 20px; font-family: Arial, sans-serif;">
+          <h2>Receipt #${id}</h2>
+          <p><strong>Client:</strong> ${receiptDetails.clientName}</p>
+          <p><strong>Date:</strong> ${receiptDetails.date}</p>
+          <p><strong>Phone:</strong> ${receiptDetails.phone}</p>
+
+          <h3>Prescription</h3>
+          <table style="width: 100%; margin: 10px 0; border-collapse: collapse;">
+            <tr>
+              <th style="border: 1px solid #ddd; padding: 8px;"></th>
+              <th style="border: 1px solid #ddd; padding: 8px;">SPH</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">CYL</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">AXE</th>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 8px;">Right Eye</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${receiptDetails.prescription.rightEye.sph}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${receiptDetails.prescription.rightEye.cyl}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${receiptDetails.prescription.rightEye.axe}</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 8px;">Left Eye</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${receiptDetails.prescription.leftEye.sph}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${receiptDetails.prescription.leftEye.cyl}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${receiptDetails.prescription.leftEye.axe}</td>
+            </tr>
+          </table>
+
+          <h3>Items</h3>
+          <table style="width: 100%; margin: 10px 0; border-collapse: collapse;">
+            <tr>
+              <th style="border: 1px solid #ddd; padding: 8px;">Item</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Quantity</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Price</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">Total</th>
+            </tr>
+            ${receiptDetails.items.map(item => `
+              <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${item.quantity}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">$${item.price.toFixed(2)}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">$${item.total.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </table>
+
+          <div style="margin-top: 20px; text-align: right;">
+            <p><strong>Subtotal:</strong> $${receiptDetails.subtotal.toFixed(2)}</p>
+            <p><strong>Tax:</strong> $${receiptDetails.tax.toFixed(2)}</p>
+            <p><strong>Discount:</strong> $${receiptDetails.discount.toFixed(2)}</p>
+            <p><strong>Total:</strong> $${receiptDetails.total.toFixed(2)}</p>
+            <p><strong>Advance Payment:</strong> $${receiptDetails.advancePayment.toFixed(2)}</p>
+            <p><strong>Balance:</strong> $${receiptDetails.balance.toFixed(2)}</p>
+          </div>
+        </div>
+      `;
+
+      await generatePDF(printElement, `receipt-${id}.pdf`);
+      toast.success("Receipt downloaded successfully");
+    } catch (error) {
+      toast.error("Failed to generate PDF");
+      console.error(error);
+    }
   };
 
   const handleDownloadReceipt = (receiptId: string) => {
@@ -373,4 +439,16 @@ const getReceiptDetails = async (receiptId: string) => {
         advancePayment: receipt.advance_payment || 0,
         balance: receipt.balance
     };
+}
+
+// Placeholder for PDF generation - needs a proper implementation using a library like html2pdf.js
+const generatePDF = async (htmlElement: HTMLElement, filename: string) => {
+    //Implement PDF generation logic here using html2pdf.js or similar library.  This is a placeholder.
+    //Example using a hypothetical library:
+    // await myPdfLibrary.generatePDF(htmlElement, filename);
+    const a = document.createElement('a');
+    a.href = 'data:application/octet-stream;base64,' + btoa(htmlElement.innerHTML);
+    a.download = filename;
+    a.click();
+
 }
