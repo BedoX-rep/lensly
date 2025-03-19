@@ -1,21 +1,16 @@
 
-import React from "react";
-import Navbar from "./Navbar";
-import { cn } from "@/lib/utils";
+import { Navbar } from "./Navbar";
 
 interface LayoutProps {
   children: React.ReactNode;
-  className?: string;
 }
 
-const Layout = ({ children, className }: LayoutProps) => {
+const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className={cn("flex-1 py-6 page-transition", className)}>
-        <div className="page-container">
-          {children}
-        </div>
+      <main className="flex-1 page-container py-8">
+        {children}
       </main>
     </div>
   );
