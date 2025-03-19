@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Eye, FileText, Printer, Download, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { getReceipts as fetchReceipts } from "@/integrations/supabase/queries";
-import { supabase } from "@/integrations/supabase/client";
 
 
 const Receipts = () => {
@@ -33,32 +32,9 @@ const Receipts = () => {
   );
 
   const handleViewReceipt = async (receiptId: string) => {
-    const receiptData = await getReceiptById(receiptId);
-    const receiptItems = await getReceiptItems(receiptId);
-
-    if (receiptData) {
-      const formattedReceipt = {
-        id: receiptData.id,
-        clientName: receiptData.clients?.name || 'Unknown',
-        phone: receiptData.clients?.phone || '',
-        date: new Date(receiptData.created_at).toLocaleDateString(),
-        prescription: receiptData.prescription,
-        subtotal: receiptData.subtotal || 0,
-        tax: receiptData.tax || 0,
-        discount: receiptData.discount || 0,
-        total: receiptData.total || 0,
-        advancePayment: receiptData.advance_payment || 0,
-        balance: receiptData.balance || 0,
-        items: receiptItems.map(item => ({
-          name: item.products?.name || item.name || '',
-          price: item.price || 0,
-          quantity: item.quantity || 0,
-          total: item.total || 0
-        }))
-      };
-      setSelectedReceipt(formattedReceipt);
-      setIsViewDialogOpen(true);
-    }
+    const receiptDetails = await getReceiptDetails(receiptId); // Added function call
+    setSelectedReceipt(receiptDetails);
+    setIsViewDialogOpen(true);
   };
 
   const handlePrintReceipt = (receiptId: string) => {
@@ -137,8 +113,6 @@ const Receipts = () => {
                   <TableHead>Client</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Advance Paid</TableHead>
-                  <TableHead>Balance Due</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -151,8 +125,6 @@ const Receipts = () => {
                       <TableCell>{receipt.clientName}</TableCell>
                       <TableCell>{receipt.date}</TableCell>
                       <TableCell className="text-right">${receipt.total.toFixed(2)}</TableCell>
-                      <TableCell>${receipt.advance_payment?.toFixed(2) || '0.00'}</TableCell>
-                      <TableCell>${receipt.balance?.toFixed(2) || '0.00'}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(receipt.status)}`}>
                           {receipt.status}
@@ -187,7 +159,7 @@ const Receipts = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       No receipts found.
                     </TableCell>
                   </TableRow>
@@ -333,53 +305,35 @@ const getReceipts = async () => {
     clientName: receipt.clients?.name || 'Unknown',
     date: new Date(receipt.created_at).toLocaleDateString(),
     total: receipt.total || 0,
-    advance_payment: receipt.advance_payment || 0,
     balance: receipt.balance || 0,
-    status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid",
-    prescription: receipt.prescription,
-    phone: receipt.clients?.phone || '',
-    items: receipt.items
+    status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
   }));
 };
 
-const getReceiptById = async (receiptId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('receipts')
-      .select(`
-        *,
-        clients (
-          name,
-          phone
-        )
-      `)
-      .eq('id', receiptId)
-      .single();
 
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error fetching receipt:', error);
-    return null;
-  }
-};
-
-const getReceiptItems = async (receiptId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('receipt_items')
-      .select(`
-        *,
-        products (
-          name
-        )
-      `)
-      .eq('receipt_id', receiptId);
-
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching receipt items:', error);
-    return [];
-  }
-};
+const getReceiptDetails = async (receiptId) => {
+    // Fetch receipt details from your data source
+    // Example using fake data and delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return {
+        id: receiptId,
+        clientName: "John Doe",
+        phone: "555-123-4567",
+        date: "2024-05-20",
+        prescription: {
+          rightEye: { sph: "-2.00", cyl: "-0.50", axe: "180" },
+          leftEye: { sph: "-2.25", cyl: "-0.75", axe: "175" }
+        },
+        items: [
+          { name: "Premium Eyeglasses", price: 120.00, quantity: 1, total: 120.00 },
+          { name: "Blue Light Filter", price: 85.50, quantity: 1, total: 85.50 },
+          { name: "Anti-Scratch Coating", price: 25.00, quantity: 1, total: 25.00 }
+        ],
+        subtotal: 230.50,
+        tax: 16.14,
+        discount: 0,
+        total: 246.64,
+        advancePayment: 246.64,
+        balance: 0
+      };
+}
