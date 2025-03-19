@@ -50,6 +50,7 @@ const Receipt = () => {
   const [showNewClientForm, setShowNewClientForm] = useState(false);
 
   const [clients, setClients] = useState<Client[]>([]);
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -285,20 +286,44 @@ const Receipt = () => {
                 {!showNewClientForm ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Select Client</Label>
-                      <Select value={selectedClient} onValueChange={handleClientSelection}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a client" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clients.map(client => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.name} - {client.phone}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="new">+ Add New Client</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex justify-between items-center">
+                        <Label>Select Client</Label>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowNewClientForm(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-1" /> Add New Client
+                        </Button>
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <Select value={selectedClient} onValueChange={setSelectedClient}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a client" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <div className="px-3 pb-2">
+                              <Input
+                                placeholder="Search clients..."
+                                className="h-8"
+                                onChange={(e) => {
+                                  const searchTerm = e.target.value.toLowerCase();
+                                  const filteredClients = clients.filter(client =>
+                                    client.name.toLowerCase().includes(searchTerm) ||
+                                    client.phone.toLowerCase().includes(searchTerm)
+                                  );
+                                  setFilteredClients(filteredClients);
+                                }}
+                              />
+                            </div>
+                            {(filteredClients || clients).map(client => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.name} - {client.phone}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 ) : (
