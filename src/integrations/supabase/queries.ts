@@ -259,36 +259,30 @@ export async function createReceipt(receipt: any, items: any[]) {
 }
 export async function updateProductPosition(id: string, newPosition: number) {
   try {
-    // Get current position of moved product
-    const { data: product } = await supabase
+    // Get all products
+    const { data: products } = await supabase
       .from('products')
-      .select('position')
-      .eq('id', id)
-      .single();
+      .select('id, position')
+      .order('position');
 
-    if (!product) return false;
-    const oldPosition = product.position;
+    if (!products) return false;
 
-    // Call the database function to update positions
-    const { error } = await supabase.rpc('update_product_positions', {
-      p_moved_id: id,
-      p_old_pos: oldPosition,
-      p_new_pos: newPosition
-    });
+    // Find the dragged product and the destination product
+    const draggedProduct = products.find(p => p.id === id);
+    const destinationProduct = products[newPosition];
+
+    if (!draggedProduct || !destinationProduct) return false;
+
+    // Swap positions
+    const { error } = await supabase
+      .from('products')
+      .upsert([
+        { id: draggedProduct.id, position: destinationProduct.position },
+        { id: destinationProduct.id, position: draggedProduct.position }
+      ]);
 
     if (error) {
-      console.error('Error updating positions:', error);
-      return false;
-    }
-
-    // Update the moved product's position
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({ position: newPosition })
-      .eq('id', id);
-
-    if (updateError) {
-      console.error('Error updating moved product position:', updateError);
+      console.error('Error swapping positions:', error);
       return false;
     }
 
