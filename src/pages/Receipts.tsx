@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search, Eye, FileText, Printer, Download, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { getReceipts as fetchReceipts } from "@/integrations/supabase/queries";
+import { getReceipts as fetchReceipts, getReceiptById, getReceiptItems } from "@/integrations/supabase/queries";
 
 
 const Receipts = () => {
@@ -32,9 +32,21 @@ const Receipts = () => {
   );
 
   const handleViewReceipt = async (receiptId: string) => {
-    const receiptDetails = await getReceiptDetails(receiptId); // Added function call
-    setSelectedReceipt(receiptDetails);
-    setIsViewDialogOpen(true);
+    const receiptData = await getReceiptById(receiptId);
+    const receiptItems = await getReceiptItems(receiptId);
+
+    if (receiptData) {
+      setSelectedReceipt({
+        ...receiptData,
+        items: receiptItems.map(item => ({
+          name: item.products?.name || '',
+          price: item.price || 0,
+          quantity: item.quantity || 0,
+          total: item.total || 0
+        }))
+      });
+      setIsViewDialogOpen(true);
+    }
   };
 
   const handlePrintReceipt = (receiptId: string) => {
@@ -113,6 +125,8 @@ const Receipts = () => {
                   <TableHead>Client</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  <TableHead>Advance Paid</TableHead>
+                  <TableHead>Balance Due</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -125,6 +139,8 @@ const Receipts = () => {
                       <TableCell>{receipt.clientName}</TableCell>
                       <TableCell>{receipt.date}</TableCell>
                       <TableCell className="text-right">${receipt.total.toFixed(2)}</TableCell>
+                      <TableCell>${receipt.advance_payment?.toFixed(2) || '0.00'}</TableCell>
+                      <TableCell>${receipt.balance?.toFixed(2) || '0.00'}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(receipt.status)}`}>
                           {receipt.status}
@@ -159,7 +175,7 @@ const Receipts = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       No receipts found.
                     </TableCell>
                   </TableRow>
@@ -305,15 +321,17 @@ const getReceipts = async () => {
     clientName: receipt.clients?.name || 'Unknown',
     date: new Date(receipt.created_at).toLocaleDateString(),
     total: receipt.total || 0,
+    advance_payment: receipt.advance_payment || 0,
     balance: receipt.balance || 0,
-    status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
+    status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid",
+    prescription: receipt.prescription,
+    phone: receipt.clients?.phone || '',
+    items: receipt.items
   }));
 };
 
-
-const getReceiptDetails = async (receiptId) => {
-    // Fetch receipt details from your data source
-    // Example using fake data and delay
+// Placeholder functions - replace with your actual Supabase queries
+const getReceiptById = async (receiptId) => {
     await new Promise(resolve => setTimeout(resolve, 500));
     return {
         id: receiptId,
@@ -324,16 +342,20 @@ const getReceiptDetails = async (receiptId) => {
           rightEye: { sph: "-2.00", cyl: "-0.50", axe: "180" },
           leftEye: { sph: "-2.25", cyl: "-0.75", axe: "175" }
         },
-        items: [
-          { name: "Premium Eyeglasses", price: 120.00, quantity: 1, total: 120.00 },
-          { name: "Blue Light Filter", price: 85.50, quantity: 1, total: 85.50 },
-          { name: "Anti-Scratch Coating", price: 25.00, quantity: 1, total: 25.00 }
-        ],
         subtotal: 230.50,
         tax: 16.14,
         discount: 0,
         total: 246.64,
-        advancePayment: 246.64,
-        balance: 0
+        advancePayment: 100,
+        balance: 146.64
       };
+}
+
+const getReceiptItems = async (receiptId) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return [
+        { name: "Premium Eyeglasses", price: 120.00, quantity: 1, total: 120.00 },
+        { name: "Blue Light Filter", price: 85.50, quantity: 1, total: 85.50 },
+        { name: "Anti-Scratch Coating", price: 25.00, quantity: 1, total: 25.00 }
+      ];
 }
