@@ -9,7 +9,158 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
+      receipt_items: {
+        Row: {
+          created_at: string
+          custom_item_name: string | null
+          id: string
+          price: number
+          product_id: string | null
+          quantity: number
+          receipt_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_item_name?: string | null
+          id?: string
+          price: number
+          product_id?: string | null
+          quantity: number
+          receipt_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_item_name?: string | null
+          id?: string
+          price?: number
+          product_id?: string | null
+          quantity?: number
+          receipt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_items_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          advance_payment: number | null
+          balance: number
+          client_id: string
+          created_at: string
+          discount_amount: number | null
+          discount_percentage: number | null
+          id: string
+          left_eye_axe: number | null
+          left_eye_cyl: number | null
+          left_eye_sph: number | null
+          right_eye_axe: number | null
+          right_eye_cyl: number | null
+          right_eye_sph: number | null
+          subtotal: number
+          tax: number
+          total: number
+        }
+        Insert: {
+          advance_payment?: number | null
+          balance?: number
+          client_id: string
+          created_at?: string
+          discount_amount?: number | null
+          discount_percentage?: number | null
+          id?: string
+          left_eye_axe?: number | null
+          left_eye_cyl?: number | null
+          left_eye_sph?: number | null
+          right_eye_axe?: number | null
+          right_eye_cyl?: number | null
+          right_eye_sph?: number | null
+          subtotal?: number
+          tax?: number
+          total?: number
+        }
+        Update: {
+          advance_payment?: number | null
+          balance?: number
+          client_id?: string
+          created_at?: string
+          discount_amount?: number | null
+          discount_percentage?: number | null
+          id?: string
+          left_eye_axe?: number | null
+          left_eye_cyl?: number | null
+          left_eye_sph?: number | null
+          right_eye_axe?: number | null
+          right_eye_cyl?: number | null
+          right_eye_sph?: number | null
+          subtotal?: number
+          tax?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
