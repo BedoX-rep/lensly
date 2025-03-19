@@ -414,8 +414,36 @@ const printReceipt = (receiptDetails) => {
   return true; 
 };
 
-const downloadReceipt = async (receiptDetails: any) => {
+const downloadReceipt = async (receiptId: string) => {
     try {
+        const { data: receipt, error } = await supabase
+            .from('receipts')
+            .select(`
+                *,
+                clients (
+                    name,
+                    phone
+                ),
+                prescription:prescriptions (
+                    right_eye_sph,
+                    right_eye_cyl,
+                    right_eye_axe,
+                    left_eye_sph,
+                    left_eye_cyl,
+                    left_eye_axe
+                ),
+                items:receipt_items (
+                    name,
+                    quantity,
+                    price,
+                    total
+                )
+            `)
+            .eq('id', receiptId)
+            .single();
+
+        if (error) throw error;
+
         const doc = new jsPDF();
 
         // Add header
@@ -424,32 +452,62 @@ const downloadReceipt = async (receiptDetails: any) => {
 
         // Add client info
         doc.setFontSize(12);
-        doc.text(`Client: ${receiptDetails.clientName}`, 20, 30);
-        doc.text(`Phone: ${receiptDetails.phone}`, 20, 37);
-        doc.text(`Date: ${receiptDetails.date}`, 20, 44);
+        doc.text(`Client: ${receipt.clients?.name || 'N/A'}`, 20, 30);
+        doc.text(`Phone: ${receipt.clients?.phone || 'N/A'}`, 20, 37);
+        doc.text(`Date: ${new Date(receipt.created_at).toLocaleDateString()}`, 20, 44);
 
-        // Add prescription details
-        doc.text('Prescription:', 20, 55);
-        doc.autoTable({
-            startY: 60,
-            head: [['Eye', 'SPH', 'CYL', 'AXE']],
-            body: [
-                ['Right Eye', receiptDetails.prescription.rightEye.sph, receiptDetails.prescription.rightEye.cyl, receiptDetails.prescription.rightEye.axe],
-                ['Left Eye', receiptDetails.prescription.leftEye.sph, receiptDetails.prescription.leftEye.cyl, receiptDetails.prescription.leftEye.axe],
-            ],
-        });
+        // Add prescription details if available
+        if (receipt.prescription) {
+            doc.text('Prescription:', 20, 55);
+            doc.autoTable({
+                startY: 60,
+                head: [['Eye', 'SPH', 'CYL', 'AXE']],
+                body: [
+                    ['Right Eye', 
+                     receipt.prescription.right_eye_sph || 'N/A', 
+                     receipt.prescription.right_eye_cyl || 'N/A', 
+                     receipt.prescription.right_eye_axe || 'N/A'],
+                    ['Left Eye', 
+                     receipt.prescription.left_eye_sph || 'N/A', 
+                     receipt.prescription.left_eye_cyl || 'N/A', 
+                     receipt.prescription.left_eye_axe || 'N/A'],
+                ],
+            });
+        }
 
         // Add items
-        doc.autoTable({
-            startY: doc.lastAutoTable.finalY + 10,
-            head: [['Item', 'Quantity', 'Price', 'Total']],
-            body: receiptDetails.items.map((item: any) => [
-                item.name,
-                item.quantity,
-                item.price.toFixed(2),
-                item.total.toFixed(2)
-            ]),
-        });
+        const items = receipt.items || [];
+        if (items.length > 0) {
+            doc.autoTable({
+                startY: receipt.prescription ? doc.lastAutoTable.finalY + 10 : 60,
+                head: [['Item', 'Quantity', 'Price', 'Total']],
+                body: items.map(item => [
+                    item.name || 'N/A',
+                    item.quantity || '0',
+                    (item.price || 0).toFixed(2),
+                    (item.total || 0).toFixed(2)
+                ]),
+            });
+        }
+
+        // Add totals
+        const finalY = items.length > 0 ? doc.lastAutoTable.finalY + 10 : 80;
+        doc.text(`Subtotal: $${(receipt.subtotal || 0).toFixed(2)}`, 140, finalY);
+        doc.text(`Tax: $${(receipt.tax || 0).toFixed(2)}`, 140, finalY + 7);
+        doc.text(`Discount: $${(receipt.discount || 0).toFixed(2)}`, 140, finalY + 14);
+        doc.text(`Total: $${(receipt.total || 0).toFixed(2)}`, 140, finalY + 21);
+        doc.text(`Advance Payment: $${(receipt.advance_payment || 0).toFixed(2)}`, 140, finalY + 28);
+        doc.text(`Balance: $${(receipt.balance || 0).toFixed(2)}`, 140, finalY + 35);
+
+        // Save the PDF
+        doc.save(`receipt-${receipt.id}.pdf`);
+        return true;
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        toast.error('Failed to download receipt');
+        return false;
+    }
+};
 
         // Add totals
         const finalY = doc.lastAutoTable.finalY + 10;
