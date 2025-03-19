@@ -37,6 +37,7 @@ export const Navbar = () => {
           <NavItem to="/products">Products</NavItem>
           <NavItem to="/clients">Clients</NavItem>
           <NavItem to="/receipts">Receipts</NavItem>
+          <NavItem to="/receipt/new">New Receipt</NavItem>
         </div>
         <div className="ml-auto flex items-center space-x-4">
           <Button
