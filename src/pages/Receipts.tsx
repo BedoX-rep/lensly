@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Eye, FileText, Printer, Download, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { getReceipts as fetchReceipts } from "@/integrations/supabase/queries";
-import { supabase } from "@/utils/supabaseClient"; // Import and initialize Supabase client
+import { supabase } from "@/integrations/supabase/client";
 
 
 const Receipts = () => {
