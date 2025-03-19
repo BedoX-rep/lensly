@@ -1,6 +1,6 @@
 
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -12,18 +12,18 @@ export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       isAuthenticated: false,
-      login: (username, password) => {
-        const isValid = username === 'admin' && password === 'Ragnarok';
-        if (isValid) {
+      login: (username: string, password: string) => {
+        if (username === 'admin' && password === 'Ragnarok') {
           set({ isAuthenticated: true });
+          return true;
         }
-        return isValid;
+        return false;
       },
       logout: () => set({ isAuthenticated: false }),
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage)
+      storage: localStorage
     }
   )
 );

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -26,9 +25,6 @@ const NavItem = ({ to, children }: { to: string; children: React.ReactNode }) =>
 };
 
 const Navbar = () => {
-  return (
-
-const Navbar = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -38,42 +34,19 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="flex items-center justify-between px-4 py-3 bg-background border-b">
-      <div className="flex items-center gap-6">
-        <NavItem to="/">Dashboard</NavItem>
-        <NavItem to="/products">Products</NavItem>
-        <NavItem to="/clients">Clients</NavItem>
-        <NavItem to="/receipts">Receipts</NavItem>
-      </div>
-      <Button variant="ghost" size="icon" onClick={handleLogout}>
-        <LogOut className="h-5 w-5" />
-      </Button>
-    </nav>
-  );
-};
-
-export default Navbar;
-
-    <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b">
-      <div className="page-container">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Eye className="h-6 w-6 text-primary" />
-            <Link to="/" className="text-xl font-semibold tracking-tight">
-              LensLy
-            </Link>
-          </div>
-          
-          <nav className="flex items-center gap-1 md:gap-2">
-            <NavItem to="/">Dashboard</NavItem>
-            <NavItem to="/products">Products</NavItem>
-            <NavItem to="/clients">Clients</NavItem>
-            <NavItem to="/receipts">Receipts</NavItem>
-            <NavItem to="/receipt/new">New Receipt</NavItem>
-          </nav>
+    <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b">
+      <div className="flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-6">
+          <NavItem to="/">Dashboard</NavItem>
+          <NavItem to="/products">Products</NavItem>
+          <NavItem to="/clients">Clients</NavItem>
+          <NavItem to="/receipts">Receipts</NavItem>
         </div>
+        <Button variant="ghost" size="icon" onClick={handleLogout}>
+          <LogOut className="h-5 w-5" />
+        </Button>
       </div>
-    </header>
+    </nav>
   );
 };
 

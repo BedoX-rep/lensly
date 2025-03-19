@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import Layout from "@/components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Clients from "./pages/Clients";
@@ -32,12 +33,14 @@ const App = () => {
               </>
             ) : (
               <>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/receipt/new" element={<Receipt />} />
-                <Route path="/receipts" element={<Receipts />} />
-                <Route path="*" element={<NotFound />} />
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/clients" element={<Clients />} />
+                  <Route path="/receipt/new" element={<Receipt />} />
+                  <Route path="/receipts" element={<Receipts />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
               </>
             )}
           </Routes>
