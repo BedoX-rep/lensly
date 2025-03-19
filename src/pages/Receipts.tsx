@@ -347,14 +347,16 @@ const getReceiptById = async (receiptId: string) => {
     .from('receipts')
     .select(`
       *,
-      clients (name, phone)
+      clients (
+        name,
+        phone
+      )
     `)
     .eq('id', receiptId)
     .single();
 
   if (error) {
     console.error('Error fetching receipt:', error);
-    toast.error('Failed to load receipt');
     return null;
   }
 
@@ -366,15 +368,16 @@ const getReceiptItems = async (receiptId: string) => {
     .from('receipt_items')
     .select(`
       *,
-      products (name)
+      products (
+        name
+      )
     `)
     .eq('receipt_id', receiptId);
 
   if (error) {
     console.error('Error fetching receipt items:', error);
-    toast.error('Failed to load receipt items');
     return [];
   }
 
-  return data || [];
+  return data;
 };
