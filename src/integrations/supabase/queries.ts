@@ -259,30 +259,28 @@ export async function createReceipt(receipt: any, items: any[]) {
 }
 export async function updateProductPosition(id: string, newPosition: number) {
   try {
-    // Get all products
-    const { data: products } = await supabase
+    const { data: products, error } = await supabase
       .from('products')
       .select('id, position')
       .order('position');
 
+    if (error) {
+        console.error("Error fetching products for position update:", error);
+        return false;
+    }
+
     if (!products) return false;
 
-    // Find the dragged product and the destination product
-    const draggedProduct = products.find(p => p.id === id);
-    const destinationProduct = products[newPosition];
+    const draggedProductIndex = products.findIndex(p => p.id === id);
+    if (draggedProductIndex === -1) return false;
 
-    if (!draggedProduct || !destinationProduct) return false;
+    const { data: updatedProducts, error: updateError } = await supabase.rpc('update_positions', {
+      moved_id: id,
+      new_pos: newPosition + 1
+    });
 
-    // Swap positions
-    const { error } = await supabase
-      .from('products')
-      .upsert([
-        { id: draggedProduct.id, position: destinationProduct.position },
-        { id: destinationProduct.id, position: draggedProduct.position }
-      ]);
-
-    if (error) {
-      console.error('Error swapping positions:', error);
+    if (updateError) {
+      console.error("Error updating product positions:", updateError);
       return false;
     }
 
