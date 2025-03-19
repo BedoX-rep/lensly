@@ -1,7 +1,8 @@
+
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Eye, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 
@@ -24,27 +25,31 @@ const NavItem = ({ to, children }: { to: string; children: React.ReactNode }) =>
   );
 };
 
-const Navbar = () => {
+export const Navbar = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   return (
-    <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b">
-      <div className="flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-6">
+    <nav className="border-b">
+      <div className="flex h-16 items-center px-4">
+        <div className="flex items-center space-x-4">
           <NavItem to="/">Dashboard</NavItem>
           <NavItem to="/products">Products</NavItem>
           <NavItem to="/clients">Clients</NavItem>
           <NavItem to="/receipts">Receipts</NavItem>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleLogout}>
-          <LogOut className="h-5 w-5" />
-        </Button>
+        <div className="ml-auto flex items-center space-x-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </nav>
   );
