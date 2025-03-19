@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search, Eye, FileText, Printer, Download, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { getReceipts as fetchReceipts, getReceiptById, getReceiptItems } from "@/integrations/supabase/queries";
+import { getReceipts as fetchReceipts } from "@/integrations/supabase/queries";
+import { supabase } from "@/utils/supabaseClient"; // Import and initialize Supabase client
 
 
 const Receipts = () => {
