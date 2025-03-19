@@ -442,10 +442,9 @@ const getReceiptDetails = async (receiptId: string) => {
     };
 }
 
-import html2pdf from 'html2pdf.js';
+import { generatePDF } from '@/lib/pdf';
 
-const generatePDF = async (htmlElement: HTMLElement, filename: string) => {
-  const options = {
+// Remove duplicate generatePDF definition as we're importing it from pdf.ts
     margin: 1,
     filename,
     image: { type: 'jpeg', quality: 0.98 },

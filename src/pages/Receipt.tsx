@@ -1,5 +1,5 @@
 
-import { generatePDF } from '../lib/pdf';
+import { generatePDF } from '@/lib/pdf';
 
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
