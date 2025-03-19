@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,19 +10,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, FileText, Eye, Printer } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { getClients, getProducts, addClient, createReceipt } from "@/integrations/supabase/queries";
 
-// Temp mock data
-const mockClients = [
-  { id: "1", name: "John Doe", phone: "555-123-4567" },
-  { id: "2", name: "Jane Smith", phone: "555-987-6543" },
-  { id: "3", name: "Robert Johnson", phone: "555-456-7890" },
-];
+interface Client {
+  id: string;
+  name: string;
+  phone: string;
+}
 
-const mockProducts = [
-  { id: "1", name: "Premium Eyeglasses", price: 120.00 },
-  { id: "2", name: "Blue Light Filter Lenses", price: 85.50 },
-  { id: "3", name: "Designer Frames", price: 210.00 },
-];
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+}
 
 interface ReceiptItem {
   id: string;
@@ -43,10 +44,15 @@ interface PrescriptionData {
 }
 
 const Receipt = () => {
+  const navigate = useNavigate();
   const [selectedClient, setSelectedClient] = useState("");
   const [newClientName, setNewClientName] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
+  
+  const [clients, setClients] = useState<Client[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -66,6 +72,21 @@ const Receipt = () => {
   const [discountType, setDiscountType] = useState<"percentage" | "amount">("percentage");
   const [discountValue, setDiscountValue] = useState("");
   const [advancePayment, setAdvancePayment] = useState("");
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      const [clientsData, productsData] = await Promise.all([
+        getClients(),
+        getProducts()
+      ]);
+      setClients(clientsData);
+      setProducts(productsData);
+      setIsLoading(false);
+    };
+    
+    loadData();
+  }, []);
   
   const calculateSubtotal = () => {
     return items.reduce((sum, item) => sum + item.total, 0);
@@ -104,7 +125,7 @@ const Receipt = () => {
   
   const addItem = () => {
     if (selectedProduct) {
-      const product = mockProducts.find(p => p.id === selectedProduct);
+      const product = products.find(p => p.id === selectedProduct);
       if (product) {
         const qty = parseInt(quantity) || 1;
         const newItem: ReceiptItem = {
@@ -155,21 +176,23 @@ const Receipt = () => {
     }
   };
   
-  const addNewClient = () => {
+  const addNewClient = async () => {
     if (!newClientName || !newClientPhone) {
       toast.error("Please enter both name and phone number");
       return;
     }
     
-    // In a real app, we would add to the database here
-    toast.success(`Client ${newClientName} added successfully`);
-    setSelectedClient("new_client_id"); // In a real app, this would be the new client ID
-    setShowNewClientForm(false);
-    setNewClientName("");
-    setNewClientPhone("");
+    const newClient = await addClient(newClientName, newClientPhone);
+    if (newClient) {
+      setClients(prev => [...prev, newClient]);
+      setSelectedClient(newClient.id);
+      setShowNewClientForm(false);
+      setNewClientName("");
+      setNewClientPhone("");
+    }
   };
   
-  const handleSaveReceipt = () => {
+  const handleSaveReceipt = async () => {
     if (!selectedClient && !showNewClientForm) {
       toast.error("Please select a client or add a new one");
       return;
@@ -180,15 +203,59 @@ const Receipt = () => {
       return;
     }
     
-    // In a real app, we would save to the database here
-    toast.success("Receipt created successfully");
-    // Clear form or redirect
+    const subtotal = calculateSubtotal();
+    const tax = calculateTax();
+    const discount = calculateDiscount();
+    const total = calculateTotal();
+    const advance = advancePayment ? parseFloat(advancePayment) : 0;
+    const balance = calculateBalance();
+    
+    const receiptData = {
+      client_id: selectedClient,
+      right_eye_sph: prescription.rightEyeSph ? parseFloat(prescription.rightEyeSph) : null,
+      right_eye_cyl: prescription.rightEyeCyl ? parseFloat(prescription.rightEyeCyl) : null,
+      right_eye_axe: prescription.rightEyeAxe ? parseInt(prescription.rightEyeAxe) : null,
+      left_eye_sph: prescription.leftEyeSph ? parseFloat(prescription.leftEyeSph) : null,
+      left_eye_cyl: prescription.leftEyeCyl ? parseFloat(prescription.leftEyeCyl) : null,
+      left_eye_axe: prescription.leftEyeAxe ? parseInt(prescription.leftEyeAxe) : null,
+      subtotal,
+      tax,
+      discount_percentage: discountType === "percentage" ? (discountValue ? parseFloat(discountValue) : 0) : 0,
+      discount_amount: discountType === "amount" ? (discountValue ? parseFloat(discountValue) : 0) : discount,
+      total,
+      advance_payment: advance,
+      balance
+    };
+    
+    const receiptItems = items.map(item => ({
+      product_id: item.productId || null,
+      custom_item_name: !item.productId ? item.name : null,
+      quantity: item.quantity,
+      price: item.price
+    }));
+    
+    const createdReceipt = await createReceipt(receiptData, receiptItems);
+    if (createdReceipt) {
+      navigate(`/receipts`);
+    }
   };
   
   const handlePrintReceipt = () => {
-    // In a real app, we would generate a PDF here
-    toast.info("Printing receipt...");
+    toast.info("PDF generation will be implemented later");
   };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex flex-col gap-6 animate-slide-up pb-12">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">New Receipt</h1>
+            <p className="text-muted-foreground">Loading data...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -222,7 +289,7 @@ const Receipt = () => {
                           <SelectValue placeholder="Select a client" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockClients.map(client => (
+                          {clients.map(client => (
                             <SelectItem key={client.id} value={client.id}>
                               {client.name} - {client.phone}
                             </SelectItem>
@@ -365,7 +432,7 @@ const Receipt = () => {
                           <SelectValue placeholder="Select a product" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockProducts.map(product => (
+                          {products.map(product => (
                             <SelectItem key={product.id} value={product.id}>
                               {product.name} - ${product.price.toFixed(2)}
                             </SelectItem>

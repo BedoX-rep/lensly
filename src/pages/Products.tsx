@@ -1,23 +1,21 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { getProducts, addProduct, updateProduct, deleteProduct } from "@/integrations/supabase/queries";
 
-// Temp mock data
-const mockProducts = [
-  { id: "1", name: "Premium Eyeglasses", price: 120.00 },
-  { id: "2", name: "Blue Light Filter Lenses", price: 85.50 },
-  { id: "3", name: "Designer Frames", price: 210.00 },
-  { id: "4", name: "Prescription Sunglasses", price: 175.00 },
-  { id: "5", name: "Contact Lenses Pack", price: 45.99 },
-];
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+}
 
 interface ProductFormData {
   name: string;
@@ -28,10 +26,23 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState<{ id: string; name: string; price: number } | null>(null);
+  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({ name: "", price: "" });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredProducts = mockProducts.filter(product => 
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    setIsLoading(true);
+    const productData = await getProducts();
+    setProducts(productData);
+    setIsLoading(false);
+  };
+
+  const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -40,20 +51,22 @@ const Products = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     const price = parseFloat(formData.price);
     if (!formData.name || isNaN(price) || price <= 0) {
       toast.error("Please enter a valid product name and price");
       return;
     }
     
-    // In a real app, we would add to the database here
-    toast.success(`Product ${formData.name} added successfully`);
-    setFormData({ name: "", price: "" });
-    setIsAddDialogOpen(false);
+    const newProduct = await addProduct(formData.name, price);
+    if (newProduct) {
+      setProducts(prev => [...prev, newProduct]);
+      setFormData({ name: "", price: "" });
+      setIsAddDialogOpen(false);
+    }
   };
 
-  const handleEditProduct = () => {
+  const handleEditProduct = async () => {
     if (!currentProduct) return;
     
     const price = parseFloat(formData.price);
@@ -62,20 +75,26 @@ const Products = () => {
       return;
     }
     
-    // In a real app, we would update the database here
-    toast.success(`Product ${formData.name} updated successfully`);
-    setIsEditDialogOpen(false);
+    const updatedProduct = await updateProduct(currentProduct.id, formData.name, price);
+    if (updatedProduct) {
+      setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+      setIsEditDialogOpen(false);
+    }
   };
 
-  const openEditDialog = (product: { id: string; name: string; price: number }) => {
+  const openEditDialog = (product: Product) => {
     setCurrentProduct(product);
     setFormData({ name: product.name, price: product.price.toString() });
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteProduct = (productId: string, productName: string) => {
-    // In a real app, we would delete from the database here
-    toast.success(`Product ${productName} deleted successfully`);
+  const handleDeleteProduct = async (productId: string, productName: string) => {
+    if (window.confirm(`Are you sure you want to delete ${productName}?`)) {
+      const success = await deleteProduct(productId);
+      if (success) {
+        setProducts(prev => prev.filter(p => p.id !== productId));
+      }
+    }
   };
 
   return (
@@ -197,7 +216,13 @@ const Products = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.length > 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center">
+                      Loading products...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.name}</TableCell>
