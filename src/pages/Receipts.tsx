@@ -36,15 +36,26 @@ const Receipts = () => {
     const receiptItems = await getReceiptItems(receiptId);
 
     if (receiptData) {
-      setSelectedReceipt({
-        ...receiptData,
+      const formattedReceipt = {
+        id: receiptData.id,
+        clientName: receiptData.clients?.name || 'Unknown',
+        phone: receiptData.clients?.phone || '',
+        date: new Date(receiptData.created_at).toLocaleDateString(),
+        prescription: receiptData.prescription,
+        subtotal: receiptData.subtotal || 0,
+        tax: receiptData.tax || 0,
+        discount: receiptData.discount || 0,
+        total: receiptData.total || 0,
+        advancePayment: receiptData.advance_payment || 0,
+        balance: receiptData.balance || 0,
         items: receiptItems.map(item => ({
-          name: item.products?.name || '',
+          name: item.products?.name || item.name || '',
           price: item.price || 0,
           quantity: item.quantity || 0,
           total: item.total || 0
         }))
-      });
+      };
+      setSelectedReceipt(formattedReceipt);
       setIsViewDialogOpen(true);
     }
   };
@@ -330,32 +341,39 @@ const getReceipts = async () => {
   }));
 };
 
-// Placeholder functions - replace with your actual Supabase queries
-const getReceiptById = async (receiptId) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return {
-        id: receiptId,
-        clientName: "John Doe",
-        phone: "555-123-4567",
-        date: "2024-05-20",
-        prescription: {
-          rightEye: { sph: "-2.00", cyl: "-0.50", axe: "180" },
-          leftEye: { sph: "-2.25", cyl: "-0.75", axe: "175" }
-        },
-        subtotal: 230.50,
-        tax: 16.14,
-        discount: 0,
-        total: 246.64,
-        advancePayment: 100,
-        balance: 146.64
-      };
-}
+const getReceiptById = async (receiptId: string) => {
+  const { data, error } = await supabase
+    .from('receipts')
+    .select(`
+      *,
+      clients (name, phone)
+    `)
+    .eq('id', receiptId)
+    .single();
 
-const getReceiptItems = async (receiptId) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return [
-        { name: "Premium Eyeglasses", price: 120.00, quantity: 1, total: 120.00 },
-        { name: "Blue Light Filter", price: 85.50, quantity: 1, total: 85.50 },
-        { name: "Anti-Scratch Coating", price: 25.00, quantity: 1, total: 25.00 }
-      ];
-}
+  if (error) {
+    console.error('Error fetching receipt:', error);
+    toast.error('Failed to load receipt');
+    return null;
+  }
+
+  return data;
+};
+
+const getReceiptItems = async (receiptId: string) => {
+  const { data, error } = await supabase
+    .from('receipt_items')
+    .select(`
+      *,
+      products (name)
+    `)
+    .eq('receipt_id', receiptId);
+
+  if (error) {
+    console.error('Error fetching receipt items:', error);
+    toast.error('Failed to load receipt items');
+    return [];
+  }
+
+  return data || [];
+};
