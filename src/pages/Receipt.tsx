@@ -197,10 +197,10 @@ const Receipt = () => {
     const newClient = await addClient(newClientName, newClientPhone);
     if (newClient) {
       setClients(prev => [...prev, newClient]);
-      setSelectedClient(newClient.id);
-      setShowNewClientForm(false);
       setNewClientName("");
       setNewClientPhone("");
+      setShowNewClientForm(false);
+      setSelectedClient(newClient.id);
     }
   };
 
@@ -297,7 +297,7 @@ const Receipt = () => {
                         </Button>
                       </div>
                       <div className="flex flex-col space-y-2">
-                        <Select value={selectedClient} onValueChange={setSelectedClient}>
+                        <Select value={selectedClient} onValueChange={handleClientSelection}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a client" />
                           </SelectTrigger>
@@ -316,7 +316,7 @@ const Receipt = () => {
                                 }}
                               />
                             </div>
-                            {(filteredClients || clients).map(client => (
+                            {clients.map(client => (
                               <SelectItem key={client.id} value={client.id}>
                                 {client.name} - {client.phone}
                               </SelectItem>
