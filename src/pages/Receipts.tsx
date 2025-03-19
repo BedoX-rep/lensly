@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Eye, FileText, Printer, Download, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { getReceipts as fetchReceipts } from "@/integrations/supabase/queries";
-import html2pdf from 'html2pdf.js';
 
 
 const Receipts = () => {
@@ -44,13 +43,76 @@ const Receipts = () => {
   const handlePrintReceipt = async (id: string) => {
     try {
       const receiptDetails = await getReceiptDetails(id);
-      const printElement = document.createElement('div');
-      printElement.innerHTML = `
-        <div style="padding: 20px; font-family: Arial, sans-serif;">
-          <h2>Receipt #${id}</h2>
-          <p><strong>Client:</strong> ${receiptDetails.clientName}</p>
-          <p><strong>Date:</strong> ${receiptDetails.date}</p>
-          <p><strong>Phone:</strong> ${receiptDetails.phone}</p>
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error("Unable to open print window");
+        return;
+      }
+      
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Receipt #${id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .details { margin-bottom: 20px; }
+            .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .summary { text-align: right; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>Receipt #${id}</h2>
+          </div>
+          <div class="details">
+            <p><strong>Client:</strong> ${receiptDetails.clientName}</p>
+            <p><strong>Date:</strong> ${receiptDetails.date}</p>
+            <p><strong>Phone:</strong> ${receiptDetails.phone}</p>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${receiptDetails.items.map(item => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>$${item.price.toFixed(2)}</td>
+                  <td>${item.quantity}</td>
+                  <td>$${item.total.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="summary">
+            <p><strong>Subtotal:</strong> $${receiptDetails.subtotal.toFixed(2)}</p>
+            <p><strong>Tax:</strong> $${receiptDetails.tax.toFixed(2)}</p>
+            <p><strong>Discount:</strong> $${receiptDetails.discount.toFixed(2)}</p>
+            <p><strong>Total:</strong> $${receiptDetails.total.toFixed(2)}</p>
+            <p><strong>Advance Payment:</strong> $${receiptDetails.advancePayment.toFixed(2)}</p>
+            <p><strong>Balance:</strong> $${receiptDetails.balance.toFixed(2)}</p>
+          </div>
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      printWindow.print();
+      printWindow.onafterprint = () => printWindow.close();
+      
+    } catch (error) {
+      toast.error("Failed to print receipt");
+      console.error(error);
+    }
+  };
 
           <h3>Prescription</h3>
           <table style="width: 100%; margin: 10px 0; border-collapse: collapse;">
@@ -111,8 +173,79 @@ const Receipts = () => {
     }
   };
 
-  const handleDownloadReceipt = (receiptId: string) => {
-    toast.info(`Downloading receipt #${receiptId}`);
+  const handleDownloadReceipt = async (id: string) => {
+    try {
+      const receiptDetails = await getReceiptDetails(id);
+      const content = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Receipt #${id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .details { margin-bottom: 20px; }
+            .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .summary { text-align: right; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>Receipt #${id}</h2>
+          </div>
+          <div class="details">
+            <p><strong>Client:</strong> ${receiptDetails.clientName}</p>
+            <p><strong>Date:</strong> ${receiptDetails.date}</p>
+            <p><strong>Phone:</strong> ${receiptDetails.phone}</p>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${receiptDetails.items.map(item => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>$${item.price.toFixed(2)}</td>
+                  <td>${item.quantity}</td>
+                  <td>$${item.total.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="summary">
+            <p><strong>Subtotal:</strong> $${receiptDetails.subtotal.toFixed(2)}</p>
+            <p><strong>Tax:</strong> $${receiptDetails.tax.toFixed(2)}</p>
+            <p><strong>Discount:</strong> $${receiptDetails.discount.toFixed(2)}</p>
+            <p><strong>Total:</strong> $${receiptDetails.total.toFixed(2)}</p>
+            <p><strong>Advance Payment:</strong> $${receiptDetails.advancePayment.toFixed(2)}</p>
+            <p><strong>Balance:</strong> $${receiptDetails.balance.toFixed(2)}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([content], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${id}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Receipt downloaded successfully");
+    } catch (error) {
+      toast.error("Failed to download receipt");
+      console.error(error);
+    }
   };
 
   const getStatusColor = (status: string) => {
