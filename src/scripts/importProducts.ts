@@ -1,21 +1,31 @@
 
 import { supabase } from '../integrations/supabase/client';
-import productsData from '../../attached_assets/products.json';
+import products from '../../attached_assets/products.json';
 
 async function importProducts() {
-  console.log('Starting product import...');
-  
-  const { data, error } = await supabase
-    .from('products')
-    .insert(productsData);
+  try {
+    console.log('Starting product import...');
     
-  if (error) {
+    // Using upsert to avoid duplicates
+    const { data, error } = await supabase
+      .from('products')
+      .upsert(
+        products.map(product => ({
+          name: product.name,
+          price: product.price
+        })),
+        { onConflict: 'name' }
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    console.log('Successfully imported all products');
+  } catch (error) {
     console.error('Error importing products:', error);
-    return;
   }
-  
-  console.log('Successfully imported all products');
 }
 
+// Run the import
 importProducts();
-</new_str>
