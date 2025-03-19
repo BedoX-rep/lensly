@@ -54,8 +54,8 @@ const Receipt = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [productSearchQuery, setProductSearchQuery] = useState(""); // Added product search query state
-  const [clientSearchQuery, setClientSearchQuery] = useState(""); // Added client search query state
+  const [productSearchQuery, setProductSearchQuery] = useState(""); 
+  const [clientSearchQuery, setClientSearchQuery] = useState(""); 
 
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -85,9 +85,9 @@ const Receipt = () => {
         getProducts()
       ]);
       setClients(clientsData);
+      setFilteredClients(clientsData);
       setProducts(productsData);
       setFilteredProducts(productsData);
-      setFilteredClients(clientsData); // Initialize filteredClients with all clients
       setIsLoading(false);
     };
 
@@ -202,11 +202,11 @@ const Receipt = () => {
     const newClient = await addClient(newClientName, newClientPhone);
     if (newClient) {
       setClients(prev => [...prev, newClient]);
-      setFilteredClients(prev => [...prev, newClient]); // Update filteredClients as well
+      setFilteredClients(prev => [...prev, newClient]); 
       setNewClientName("");
       setNewClientPhone("");
       setShowNewClientForm(false);
-      setSelectedClient(newClient.id); // Automatically select the new client
+      setSelectedClient(newClient.id); 
     }
   };
 
@@ -267,6 +267,7 @@ const Receipt = () => {
 
   const handleClientSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchTerm = e.target.value.toLowerCase();
+    setClientSearchQuery(searchTerm);
     const filtered = clients.filter(client =>
       client.name.toLowerCase().includes(searchTerm) ||
       client.phone.toLowerCase().includes(searchTerm)
