@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Eye, FileText, Printer, Download, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { getReceipts as fetchReceipts } from "@/integrations/supabase/queries";
+import html2pdf from 'html2pdf.js';
 
 
 const Receipts = () => {
@@ -441,14 +442,16 @@ const getReceiptDetails = async (receiptId: string) => {
     };
 }
 
-// Placeholder for PDF generation - needs a proper implementation using a library like html2pdf.js
-const generatePDF = async (htmlElement: HTMLElement, filename: string) => {
-    //Implement PDF generation logic here using html2pdf.js or similar library.  This is a placeholder.
-    //Example using a hypothetical library:
-    // await myPdfLibrary.generatePDF(htmlElement, filename);
-    const a = document.createElement('a');
-    a.href = 'data:application/octet-stream;base64,' + btoa(htmlElement.innerHTML);
-    a.download = filename;
-    a.click();
+import html2pdf from 'html2pdf.js';
 
-}
+const generatePDF = async (htmlElement: HTMLElement, filename: string) => {
+  const options = {
+    margin: 1,
+    filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, logging: false },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+
+  return html2pdf().set(options).from(htmlElement).save();
+};
