@@ -52,8 +52,9 @@ const Receipt = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]); // Added filteredProducts state
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [productSearchQuery, setProductSearchQuery] = useState(""); // Added product search query state
 
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -84,7 +85,7 @@ const Receipt = () => {
       ]);
       setClients(clientsData);
       setProducts(productsData);
-      setFilteredProducts(productsData); // Initialize filteredProducts
+      setFilteredProducts(productsData);
       setIsLoading(false);
     };
 
@@ -253,6 +254,20 @@ const Receipt = () => {
     setSelectedProduct(value);
   };
 
+  useEffect(() => {
+    const filterProducts = () => {
+      const searchTerm = productSearchQuery.toLowerCase();
+      const filtered = products.filter(product =>
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.price.toString().includes(searchTerm)
+      );
+      setFilteredProducts(filtered);
+    };
+
+    filterProducts();
+  }, [productSearchQuery, products]);
+
+
   if (isLoading) {
     return (
       <Layout>
@@ -322,7 +337,7 @@ const Receipt = () => {
                                 }}
                               />
                             </div>
-                            {clients.map(client => (
+                            {filteredClients.map(client => (
                               <SelectItem key={client.id} value={client.id}>
                                 {client.name} - {client.phone}
                               </SelectItem>
@@ -460,32 +475,26 @@ const Receipt = () => {
                     <h3 className="font-medium">Product Item</h3>
                     <div className="space-y-2">
                       <Label htmlFor="productSelect">Select Product</Label>
-                      <Select value={selectedProduct} onValueChange={handleProductSelection}>
-                        <SelectTrigger id="productSelect">
-                          <SelectValue placeholder="Select a product" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <div className="px-3 pb-2">
-                            <Input
-                              placeholder="Search products..."
-                              className="h-8"
-                              onChange={(e) => {
-                                const searchTerm = e.target.value.toLowerCase();
-                                const filtered = products.filter(product =>
-                                  product.name.toLowerCase().includes(searchTerm) ||
-                                  product.price.toString().includes(searchTerm)
-                                );
-                                setFilteredProducts(filtered);
-                              }}
-                            />
-                          </div>
-                          {products.map(product => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name} - ${product.price.toFixed(2)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-2">
+                        <Input
+                          type="text"
+                          placeholder="Search products..."
+                          value={productSearchQuery}
+                          onChange={(e) => setProductSearchQuery(e.target.value)}
+                        />
+                        <Select value={selectedProduct} onValueChange={handleProductSelection}>
+                          <SelectTrigger id="productSelect">
+                            <SelectValue placeholder="Select a product" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredProducts.map((product) => (
+                              <SelectItem key={product.id} value={product.id}>
+                                {product.name} - ${product.price.toFixed(2)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
 
