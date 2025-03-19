@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
@@ -49,17 +48,17 @@ const Receipt = () => {
   const [newClientName, setNewClientName] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
-  
+
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [customItemName, setCustomItemName] = useState("");
   const [customItemPrice, setCustomItemPrice] = useState("");
   const [quantity, setQuantity] = useState("1");
-  
+
   const [prescription, setPrescription] = useState<PrescriptionData>({
     rightEyeSph: "",
     rightEyeCyl: "",
@@ -68,7 +67,7 @@ const Receipt = () => {
     leftEyeCyl: "",
     leftEyeAxe: "",
   });
-  
+
   const [discountType, setDiscountType] = useState<"percentage" | "amount">("percentage");
   const [discountValue, setDiscountValue] = useState("");
   const [advancePayment, setAdvancePayment] = useState("");
@@ -84,22 +83,22 @@ const Receipt = () => {
       setProducts(productsData);
       setIsLoading(false);
     };
-    
+
     loadData();
   }, []);
-  
+
   const calculateSubtotal = () => {
     return items.reduce((sum, item) => sum + item.total, 0);
   };
-  
+
   const calculateTax = () => {
     return calculateSubtotal() * 0.07; // Assuming 7% tax
   };
-  
+
   const calculateDiscount = () => {
     const subtotal = calculateSubtotal();
     if (!discountValue || isNaN(parseFloat(discountValue))) return 0;
-    
+
     if (discountType === "percentage") {
       const percentage = parseFloat(discountValue) / 100;
       return subtotal * percentage;
@@ -107,22 +106,22 @@ const Receipt = () => {
       return parseFloat(discountValue);
     }
   };
-  
+
   const calculateTotal = () => {
     return calculateSubtotal() + calculateTax() - calculateDiscount();
   };
-  
+
   const calculateBalance = () => {
     const total = calculateTotal();
     const advance = advancePayment ? parseFloat(advancePayment) : 0;
     return total - advance;
   };
-  
+
   const handlePrescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPrescription(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const addItem = () => {
     if (selectedProduct) {
       const product = products.find(p => p.id === selectedProduct);
@@ -142,7 +141,7 @@ const Receipt = () => {
         return;
       }
     }
-    
+
     if (customItemName && customItemPrice) {
       const price = parseFloat(customItemPrice);
       const qty = parseInt(quantity) || 1;
@@ -161,11 +160,11 @@ const Receipt = () => {
       }
     }
   };
-  
+
   const removeItem = (itemId: string) => {
     setItems(prev => prev.filter(item => item.id !== itemId));
   };
-  
+
   const handleClientSelection = (value: string) => {
     if (value === "new") {
       setSelectedClient("");
@@ -175,13 +174,13 @@ const Receipt = () => {
       setShowNewClientForm(false);
     }
   };
-  
+
   const addNewClient = async () => {
     if (!newClientName || !newClientPhone) {
       toast.error("Please enter both name and phone number");
       return;
     }
-    
+
     const newClient = await addClient(newClientName, newClientPhone);
     if (newClient) {
       setClients(prev => [...prev, newClient]);
@@ -191,26 +190,14 @@ const Receipt = () => {
       setNewClientPhone("");
     }
   };
-  
+
   const handleSaveReceipt = async () => {
-    if (!selectedClient && !showNewClientForm) {
-      toast.error("Please select a client or add a new one");
+    if (!selectedClient || items.length === 0) {
+      toast.error("Please select a client and add items");
       return;
     }
-    
-    if (items.length === 0) {
-      toast.error("Please add at least one item to the receipt");
-      return;
-    }
-    
-    const subtotal = calculateSubtotal();
-    const tax = calculateTax();
-    const discount = calculateDiscount();
-    const total = calculateTotal();
-    const advance = advancePayment ? parseFloat(advancePayment) : 0;
-    const balance = calculateBalance();
-    
-    const receiptData = {
+
+    const receipt = {
       client_id: selectedClient,
       right_eye_sph: prescription.rightEyeSph ? parseFloat(prescription.rightEyeSph) : null,
       right_eye_cyl: prescription.rightEyeCyl ? parseFloat(prescription.rightEyeCyl) : null,
@@ -218,28 +205,31 @@ const Receipt = () => {
       left_eye_sph: prescription.leftEyeSph ? parseFloat(prescription.leftEyeSph) : null,
       left_eye_cyl: prescription.leftEyeCyl ? parseFloat(prescription.leftEyeCyl) : null,
       left_eye_axe: prescription.leftEyeAxe ? parseInt(prescription.leftEyeAxe) : null,
-      subtotal,
-      tax,
+      subtotal: calculateSubtotal(),
+      tax: calculateTax(),
       discount_percentage: discountType === "percentage" ? (discountValue ? parseFloat(discountValue) : 0) : 0,
-      discount_amount: discountType === "amount" ? (discountValue ? parseFloat(discountValue) : 0) : discount,
-      total,
-      advance_payment: advance,
-      balance
+      discount_amount: discountType === "amount" ? (discountValue ? parseFloat(discountValue) : 0) : calculateDiscount(),
+      total: calculateTotal(),
+      advance_payment: advancePayment ? parseFloat(advancePayment) : 0,
+      balance: calculateBalance(),
+      created_at: new Date().toISOString()
     };
-    
+
     const receiptItems = items.map(item => ({
       product_id: item.productId || null,
       custom_item_name: !item.productId ? item.name : null,
       quantity: item.quantity,
       price: item.price
     }));
-    
-    const createdReceipt = await createReceipt(receiptData, receiptItems);
-    if (createdReceipt) {
-      navigate(`/receipts`);
+
+    const result = await createReceipt(receipt, receiptItems);
+
+    if (result) {
+      toast.success("Receipt created successfully");
+      navigate("/receipts");
     }
   };
-  
+
   const handlePrintReceipt = () => {
     toast.info("PDF generation will be implemented later");
   };
@@ -266,14 +256,14 @@ const Receipt = () => {
             Create a new prescription receipt
           </p>
         </div>
-        
+
         <Tabs defaultValue="client" className="w-full">
           <TabsList className="grid w-full md:w-[400px] grid-cols-3">
             <TabsTrigger value="client">Client</TabsTrigger>
             <TabsTrigger value="prescription">Prescription</TabsTrigger>
             <TabsTrigger value="items">Items</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="client" className="space-y-4 mt-4">
             <Card>
               <CardHeader>
@@ -332,7 +322,7 @@ const Receipt = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="prescription" className="space-y-4 mt-4">
             <Card>
               <CardHeader>
@@ -375,7 +365,7 @@ const Receipt = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <h3 className="font-medium text-lg">Left Eye</h3>
                     <div className="grid grid-cols-3 gap-4">
@@ -415,7 +405,7 @@ const Receipt = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="items" className="space-y-4 mt-4">
             <Card>
               <CardHeader>
@@ -441,7 +431,7 @@ const Receipt = () => {
                       </Select>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <h3 className="font-medium">Custom Item</h3>
                     <div className="space-y-2">
@@ -467,7 +457,7 @@ const Receipt = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantity</Label>
                   <Input
@@ -479,7 +469,7 @@ const Receipt = () => {
                     className="w-full md:w-1/4"
                   />
                 </div>
-                
+
                 <div className="flex justify-end">
                   <Button onClick={addItem} className="gap-1">
                     <Plus className="h-4 w-4" /> Add Item
@@ -487,7 +477,7 @@ const Receipt = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Receipt Items</CardTitle>
@@ -533,7 +523,7 @@ const Receipt = () => {
                 </Table>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Payment Information</CardTitle>
@@ -575,7 +565,7 @@ const Receipt = () => {
                       step={discountType === "percentage" ? "1" : "0.01"}
                     />
                   </div>
-                  
+
                   <div className="space-y-4">
                     <h3 className="font-medium">Advance Payment</h3>
                     <div className="space-y-2">
@@ -592,7 +582,7 @@ const Receipt = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="border-t pt-4">
                   <dl className="divide-y">
                     <div className="flex justify-between py-2">
