@@ -116,6 +116,8 @@ const Receipts = () => {
                   <TableHead>Client</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  <TableHead>Advance Paid</TableHead>
+                  <TableHead>Balance Due</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -128,6 +130,8 @@ const Receipts = () => {
                       <TableCell>{receipt.clientName}</TableCell>
                       <TableCell>{receipt.date}</TableCell>
                       <TableCell className="text-right">${receipt.total.toFixed(2)}</TableCell>
+                      <TableCell>${(receipt.advancePayment || 0).toFixed(2)}</TableCell>
+                      <TableCell>${receipt.balance.toFixed(2)}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(receipt.status)}`}>
                           {receipt.status}
@@ -162,7 +166,7 @@ const Receipts = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       No receipts found.
                     </TableCell>
                   </TableRow>
@@ -308,6 +312,7 @@ const getReceipts = async () => {
     clientName: receipt.clients?.name || 'Unknown',
     date: new Date(receipt.created_at).toLocaleDateString(),
     total: receipt.total || 0,
+    advancePayment: receipt.advance_payment || 0,
     balance: receipt.balance || 0,
     status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
   }));
