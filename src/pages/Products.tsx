@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
@@ -7,14 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
-import { getProducts, addProduct, updateProduct, deleteProduct } from "@/integrations/supabase/queries";
+import { getProducts, addProduct, updateProduct, deleteProduct, updateProductPosition } from "@/integrations/supabase/queries";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 interface Product {
   id: string;
   name: string;
   price: number;
+  position: number;
 }
 
 interface ProductFormData {
@@ -22,28 +23,45 @@ interface ProductFormData {
   price: string;
 }
 
-const Products = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState<ProductFormData>({ name: "", price: "" });
+export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<ProductFormData>({ name: "", price: "" });
+
 
   useEffect(() => {
     loadProducts();
   }, []);
 
   const loadProducts = async () => {
-    setIsLoading(true);
-    const productData = await getProducts();
-    setProducts(productData);
-    setIsLoading(false);
+    setLoading(true);
+    const data = await getProducts();
+    setProducts(data);
+    setLoading(false);
   };
 
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const handleDragEnd = async (result: any) => {
+    if (!result.destination) return;
+
+    const items = Array.from(products);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      position: index,
+    }));
+
+    setProducts(updatedItems);
+
+    // Update position in database
+    await updateProductPosition(reorderedItem.id, result.destination.index);
+  };
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,35 +75,13 @@ const Products = () => {
       toast.error("Please enter a valid product name and price");
       return;
     }
-    
+
     const newProduct = await addProduct(formData.name, price);
     if (newProduct) {
       setProducts(prev => [...prev, newProduct]);
       setFormData({ name: "", price: "" });
       setIsAddDialogOpen(false);
     }
-  };
-
-  const handleEditProduct = async () => {
-    if (!currentProduct) return;
-    
-    const price = parseFloat(formData.price);
-    if (!formData.name || isNaN(price) || price <= 0) {
-      toast.error("Please enter a valid product name and price");
-      return;
-    }
-    
-    const updatedProduct = await updateProduct(currentProduct.id, formData.name, price);
-    if (updatedProduct) {
-      setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-      setIsEditDialogOpen(false);
-    }
-  };
-
-  const openEditDialog = (product: Product) => {
-    setCurrentProduct(product);
-    setFormData({ name: product.name, price: product.price.toString() });
-    setIsEditDialogOpen(true);
   };
 
   const handleDeleteProduct = async (productId: string, productName: string) => {
@@ -99,50 +95,40 @@ const Products = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col gap-6 animate-slide-up">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-            <p className="text-muted-foreground">
-              Manage your optical products
-            </p>
-          </div>
-          
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Products</h1>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-1">
-                <Plus className="h-4 w-4" /> 
-                <span className="hidden sm:inline">Add Product</span>
-                <span className="sm:hidden">Add</span>
-              </Button>
+              <Button onClick={() => setIsAddDialogOpen(true)}><Plus className="mr-2 h-4 w-4" /> Add Product</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
-                <DialogDescription>Add a new product to your inventory</DialogDescription>
+                <DialogDescription>Add a new product to your inventory.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">Product Name</Label>
-                  <Input 
-                    id="name" 
-                    name="name" 
-                    value={formData.name} 
-                    onChange={handleInputChange} 
-                    placeholder="Premium Eyeglasses" 
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Premium Eyeglasses"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="price">Price ($)</Label>
-                  <Input 
-                    id="price" 
-                    name="price" 
-                    type="number" 
-                    value={formData.price} 
-                    onChange={handleInputChange} 
-                    placeholder="120.00" 
-                    min="0" 
-                    step="0.01" 
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    placeholder="120.00"
+                    min="0"
+                    step="0.01"
                   />
                 </div>
               </div>
@@ -152,115 +138,79 @@ const Products = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Product</DialogTitle>
-                <DialogDescription>Update product information</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-name">Product Name</Label>
-                  <Input 
-                    id="edit-name" 
-                    name="name" 
-                    value={formData.name} 
-                    onChange={handleInputChange} 
-                    placeholder="Premium Eyeglasses" 
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-price">Price ($)</Label>
-                  <Input 
-                    id="edit-price" 
-                    name="price" 
-                    type="number" 
-                    value={formData.price} 
-                    onChange={handleInputChange} 
-                    placeholder="120.00" 
-                    min="0" 
-                    step="0.01" 
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleEditProduct}>Save Changes</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
-        
-        <div className="flex w-full max-w-sm items-center space-x-2">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/70" />
-            <Input
-              type="search"
-              placeholder="Search products..."
-              className="w-full pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-        
+
         <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product Name</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="w-[100px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
-                      Loading products...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => openEditDialog(product)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDeleteProduct(product.id, product.name)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
-                      No products found.
-                    </TableCell>
-                  </TableRow>
+          <CardContent className="p-6">
+            <div className="mb-4">
+              <Input
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="products">
+                {(provided) => (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead style={{ width: 50 }}></TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead style={{ width: 100 }}>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody {...provided.droppableProps} ref={provided.innerRef}>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="h-24 text-center">Loading products...</TableCell>
+                        </TableRow>
+                      ) : filteredProducts.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="h-24 text-center">No products found.</TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredProducts.map((product, index) => (
+                          <Draggable key={product.id} draggableId={product.id} index={index}>
+                            {(provided) => (
+                              <TableRow
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                              >
+                                <TableCell>
+                                  <div {...provided.dragHandleProps}>
+                                    <GripVertical className="h-4 w-4" />
+                                  </div>
+                                </TableCell>
+                                <TableCell>{product.name}</TableCell>
+                                <TableCell>${product.price.toFixed(2)}</TableCell>
+                                <TableCell>
+                                  <div className="flex gap-2">
+                                    <Button variant="ghost" size="icon" onClick={() => {/*Add Edit Functionality Here*/}}>
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteProduct(product.id, product.name)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </Draggable>
+                        ))
+                      )}
+                      {provided.placeholder}
+                    </TableBody>
+                  </Table>
                 )}
-              </TableBody>
-            </Table>
+              </Droppable>
+            </DragDropContext>
           </CardContent>
         </Card>
       </div>
     </Layout>
   );
-};
-
-export default Products;
+}

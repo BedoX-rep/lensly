@@ -7,7 +7,7 @@ export async function getProducts() {
   const { data, error } = await supabase
     .from('products')
     .select('*')
-    .order('name', { ascending: true });
+    .order('position', { ascending: true });
   
   if (error) {
     console.error('Error fetching products:', error);
@@ -257,4 +257,18 @@ export async function createReceipt(receipt: any, items: any[]) {
   
   toast.success('Receipt created successfully');
   return receiptData;
+}
+export async function updateProductPosition(id: string, newPosition: number) {
+  const { error } = await supabase
+    .from('products')
+    .update({ position: newPosition })
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error updating product position:', error);
+    toast.error('Failed to update product position');
+    return false;
+  }
+  
+  return true;
 }
