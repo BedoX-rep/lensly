@@ -425,28 +425,56 @@ const downloadReceipt = async (receiptDetails) => {
 
         // Add client info
         doc.setFontSize(12);
-        doc.text(`Client: ${receiptDetails.clientName || 'N/A'}`, 20, 30);
-        doc.text(`Phone: ${receiptDetails.phone || 'N/A'}`, 20, 37);
-        doc.text(`Date: ${receiptDetails.date}`, 20, 44);
+        doc.text(`Client: ${receiptDetails.clients?.name || 'N/A'}`, 20, 30);
+        doc.text(`Phone: ${receiptDetails.clients?.phone || 'N/A'}`, 20, 37);
+        doc.text(`Date: ${new Date(receiptDetails.created_at).toLocaleDateString()}`, 20, 44);
 
-        // Add prescription details if available
-        if (receiptDetails.prescription) {
-            doc.text('Prescription:', 20, 55);
-            doc.autoTable({
-                startY: 60,
-                head: [['Eye', 'SPH', 'CYL', 'AXE']],
-                body: [
-                    ['Right Eye', 
-                     receiptDetails.prescription.rightEye.sph || 'N/A', 
-                     receiptDetails.prescription.rightEye.cyl || 'N/A', 
-                     receiptDetails.prescription.rightEye.axe || 'N/A'],
-                    ['Left Eye', 
-                     receiptDetails.prescription.leftEye.sph || 'N/A', 
-                     receiptDetails.prescription.leftEye.cyl || 'N/A', 
-                     receiptDetails.prescription.leftEye.axe || 'N/A'],
-                ],
-            });
-        }
+        // Add prescription details
+        doc.text('Prescription:', 20, 55);
+        doc.autoTable({
+            startY: 60,
+            head: [['Eye', 'SPH', 'CYL', 'AXE']],
+            body: [
+                ['Right Eye', 
+                 receiptDetails.right_eye_sph || 'N/A', 
+                 receiptDetails.right_eye_cyl || 'N/A', 
+                 receiptDetails.right_eye_axe || 'N/A'],
+                ['Left Eye', 
+                 receiptDetails.left_eye_sph || 'N/A', 
+                 receiptDetails.left_eye_cyl || 'N/A', 
+                 receiptDetails.left_eye_axe || 'N/A'],
+            ],
+        });
+
+        // Add items table
+        const items = receiptDetails.receipt_items || [];
+        doc.autoTable({
+            startY: doc.autoTable.previous.finalY + 20,
+            head: [['Item', 'Quantity', 'Price', 'Total']],
+            body: items.map(item => [
+                item.custom_item_name || item.products?.name || 'N/A',
+                item.quantity,
+                `$${item.price.toFixed(2)}`,
+                `$${(item.quantity * item.price).toFixed(2)}`
+            ]),
+        });
+
+        // Add totals
+        const startY = doc.autoTable.previous.finalY + 10;
+        doc.text(`Subtotal: $${receiptDetails.subtotal.toFixed(2)}`, 150, startY, { align: 'right' });
+        doc.text(`Tax: $${receiptDetails.tax.toFixed(2)}`, 150, startY + 7, { align: 'right' });
+        doc.text(`Discount (${receiptDetails.discount_percentage}%): $${receiptDetails.discount_amount.toFixed(2)}`, 150, startY + 14, { align: 'right' });
+        doc.text(`Total: $${receiptDetails.total.toFixed(2)}`, 150, startY + 21, { align: 'right' });
+        doc.text(`Advance Payment: $${receiptDetails.advance_payment.toFixed(2)}`, 150, startY + 28, { align: 'right' });
+        doc.text(`Balance: $${receiptDetails.balance.toFixed(2)}`, 150, startY + 35, { align: 'right' });
+
+        // Save the PDF
+        doc.save(`receipt-${receiptDetails.clients?.name}-${new Date(receiptDetails.created_at).toLocaleDateString()}.pdf`);
+        return true;
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        return false;
+    }
 
         // Add items
         const items = receiptDetails.items || [];
