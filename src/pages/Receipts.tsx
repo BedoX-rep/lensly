@@ -507,10 +507,7 @@ const downloadReceipt = async (receiptId: string) => {
         toast.error('Failed to download receipt');
         return false;
     }
-};
-
-        // Add totals
-        const finalY = doc.lastAutoTable.finalY + 10;
+}
         doc.text(`Subtotal: $${receiptDetails.subtotal.toFixed(2)}`, 140, finalY);
         doc.text(`Tax: $${receiptDetails.tax.toFixed(2)}`, 140, finalY + 7);
         doc.text(`Discount: $${receiptDetails.discount.toFixed(2)}`, 140, finalY + 14);
