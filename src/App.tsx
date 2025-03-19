@@ -13,23 +13,33 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/receipt/new" element={<Receipt />} />
-          <Route path="/receipts" element={<Receipts />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {!isAuthenticated ? (
+              <Route path="*" element={<Login />} />
+            ) : (
+              <>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/receipt/new" element={<Receipt />} />
+                <Route path="/receipts" element={<Receipts />} />
+                <Route path="*" element={<NotFound />} />
+              </>
+            )}
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
