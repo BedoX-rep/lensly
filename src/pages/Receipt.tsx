@@ -71,6 +71,7 @@ const Receipt = () => {
   const [discountType, setDiscountType] = useState<"percentage" | "amount">("percentage");
   const [discountValue, setDiscountValue] = useState("");
   const [advancePayment, setAdvancePayment] = useState("");
+  const [taxInput, setTaxInput] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
@@ -91,8 +92,19 @@ const Receipt = () => {
     return items.reduce((sum, item) => sum + item.total, 0);
   };
 
+  const calculateAssuranceTax = () => {
+    const subtotal = calculateSubtotal();
+    const taxAmount = parseFloat(taxInput) || 0;
+
+    if (taxAmount <= subtotal) {
+      return 0;
+    }
+
+    return (taxAmount - subtotal) * 0.33;
+  };
+
   const calculateTax = () => {
-    return calculateSubtotal() * 0.07; // Assuming 7% tax
+    return calculateAssuranceTax();
   };
 
   const calculateDiscount = () => {
@@ -458,16 +470,35 @@ const Receipt = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantity</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    min="1"
-                    className="w-full md:w-1/4"
-                  />
+                <div className="space-y-4">
+                  <div className="flex gap-4 mb-4">
+                    <div className="flex-1">
+                      <Label htmlFor="taxInput">Tax Amount</Label>
+                      <Input
+                        id="taxInput"
+                        type="number"
+                        value={taxInput}
+                        onChange={(e) => setTaxInput(e.target.value)}
+                        placeholder="Enter tax amount"
+                      />
+                      {calculateAssuranceTax() > 0 && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Assurance tax: ${calculateAssuranceTax().toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      min="1"
+                      className="w-full md:w-1/4"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-end">
@@ -494,14 +525,20 @@ const Receipt = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {items.length > 0 ? (
-                      items.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                          <TableCell className="text-right">{item.quantity}</TableCell>
-                          <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
-                          <TableCell>
+                    {[...items, calculateAssuranceTax() > 0 ? {
+                      id: 'assurance-tax',
+                      name: 'Assurance Tax',
+                      price: calculateAssuranceTax(),
+                      quantity: 1,
+                      total: calculateAssuranceTax()
+                    } : null].filter(Boolean).map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
+                        <TableCell>
+                          {item.id !== 'assurance-tax' && (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -509,16 +546,10 @@ const Receipt = () => {
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                          No items added yet.
+                          )}
                         </TableCell>
                       </TableRow>
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -590,7 +621,7 @@ const Receipt = () => {
                       <dd className="text-sm font-medium">${calculateSubtotal().toFixed(2)}</dd>
                     </div>
                     <div className="flex justify-between py-2">
-                      <dt className="text-sm font-medium">Tax (7%)</dt>
+                      <dt className="text-sm font-medium">Tax</dt>
                       <dd className="text-sm font-medium">${calculateTax().toFixed(2)}</dd>
                     </div>
                     <div className="flex justify-between py-2">
