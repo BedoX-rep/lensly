@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import jsPDF from 'jspdf';
-import 'jspdf-autotable'; 
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,7 +19,7 @@ const Receipts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedDateRange, setSelectedDateRange] = useState("all");
-  const [selectedReceipt, setSelectedReceipt] = useState(null); 
+  const [selectedReceipt, setSelectedReceipt] = useState(null); //Added to handle receipt details
 
   useEffect(() => {
     const loadReceipts = async () => {
@@ -37,35 +35,17 @@ const Receipts = () => {
   );
 
   const handleViewReceipt = async (receiptId: string) => {
-    const receiptDetails = await getReceiptDetails(receiptId); 
+    const receiptDetails = await getReceiptDetails(receiptId); // Added function call
     setSelectedReceipt(receiptDetails);
     setIsViewDialogOpen(true);
   };
 
-  const handlePrintReceipt = async (id: string) => {
-    try {
-      const receiptDetails = await getReceiptDetails(id);
-      const success = printReceipt(receiptDetails);
-      if (!success) {
-        toast.error("Failed to print receipt");
-      }
-    } catch (error) {
-      console.error("Error printing receipt:", error);
-      toast.error("Failed to print receipt");
-    }
+  const handlePrintReceipt = (receiptId: string) => {
+    toast.info(`Printing receipt #${receiptId}`);
   };
 
-  const handleDownloadReceipt = async (id: string) => {
-    try {
-      const receiptDetails = await getReceiptDetails(id);
-      const success = await downloadReceipt(receiptDetails);
-      if (!success) {
-        toast.error("Failed to download receipt");
-      }
-    } catch (error) {
-      console.error("Error downloading receipt:", error);
-      toast.error("Failed to download receipt");
-    }
+  const handleDownloadReceipt = (receiptId: string) => {
+    toast.info(`Downloading receipt #${receiptId}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -199,10 +179,10 @@ const Receipts = () => {
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>Receipt #{selectedReceipt ? selectedReceipt.id : ''}</DialogTitle> 
+              <DialogTitle>Receipt #{selectedReceipt ? selectedReceipt.id : ''}</DialogTitle> {/*Conditional rendering for ID */}
             </DialogHeader>
 
-            {selectedReceipt && ( 
+            {selectedReceipt && ( //Conditional rendering of receipt details
               <div className="space-y-6 py-4">
                 <div className="flex justify-between">
                   <div>
@@ -252,64 +232,58 @@ const Receipts = () => {
 
                 <div>
                   <h3 className="font-medium mb-2">Items</h3>
-                  <table id="receipt-table">
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th className="text-right">Price</th>
-                        <th className="text-right">Qty</th>
-                        <th className="text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {selectedReceipt.items.map((item, index) => (
-                        <tr key={index}>
-                          <td>{item.name}</td>
-                          <td className="text-right">${item.price.toFixed(2)}</td>
-                          <td className="text-right">{item.quantity}</td>
-                          <td className="text-right">${item.total.toFixed(2)}</td>
-                        </tr>
+                        <TableRow key={index}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{item.quantity}</TableCell>
+                          <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
 
                 <div>
                   <h3 className="font-medium mb-2">Payment Summary</h3>
-                  <table id="payment-summary">
-                    <thead>
-                      <tr>
-                        <th>Description</th>
-                        <th className="text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>Subtotal</td>
-                        <td className="text-right">${selectedReceipt.subtotal.toFixed(2)}</td>
-                      </tr>
-                      <tr>
-                        <td>Tax</td>
-                        <td className="text-right">${selectedReceipt.tax.toFixed(2)}</td>
-                      </tr>
-                      <tr>
-                        <td>Discount</td>
-                        <td className="text-right">${selectedReceipt.discount.toFixed(2)}</td>
-                      </tr>
-                      <tr>
-                        <td>Total</td>
-                        <td className="text-right">${selectedReceipt.total.toFixed(2)}</td>
-                      </tr>
-                      <tr>
-                        <td>Advance Payment</td>
-                        <td className="text-right">${selectedReceipt.advancePayment.toFixed(2)}</td>
-                      </tr>
-                      <tr>
-                        <td>Balance Due</td>
-                        <td className="text-right">${selectedReceipt.balance.toFixed(2)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <dl className="divide-y">
+                      <div className="flex justify-between py-2">
+                        <dt className="text-sm font-medium">Subtotal</dt>
+                        <dd className="text-sm font-medium">${selectedReceipt.subtotal.toFixed(2)}</dd>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <dt className="text-sm font-medium">Tax</dt>
+                        <dd className="text-sm font-medium">${selectedReceipt.tax.toFixed(2)}</dd>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <dt className="text-sm font-medium">Discount</dt>
+                        <dd className="text-sm font-medium">${selectedReceipt.discount.toFixed(2)}</dd>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <dt className="text-sm font-medium">Total</dt>
+                        <dd className="text-sm font-medium">${selectedReceipt.total.toFixed(2)}</dd>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <dt className="text-sm font-medium">Advance Payment</dt>
+                        <dd className="text-sm font-medium">${selectedReceipt.advancePayment.toFixed(2)}</dd>
+                      </div>
+                      <div className="flex justify-between py-2 font-bold">
+                        <dt>Balance Due</dt>
+                        <dd>${selectedReceipt.balance.toFixed(2)}</dd>
+                      </div>
+                    </dl>
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-2">
@@ -357,7 +331,6 @@ const getReceiptDetails = async (receiptId: string) => {
             receipt_items (
                 quantity,
                 price,
-                custom_item_name,
                 products (
                     name
                 )
@@ -369,7 +342,7 @@ const getReceiptDetails = async (receiptId: string) => {
     if (receiptError) throw receiptError;
 
     const items = receipt.receipt_items.map(item => ({
-        name: item.custom_item_name || item.products.name,
+        name: item.products.name,
         price: item.price,
         quantity: item.quantity,
         total: item.price * item.quantity
@@ -401,110 +374,3 @@ const getReceiptDetails = async (receiptId: string) => {
         balance: receipt.balance
     };
 }
-
-const printReceipt = (receiptDetails) => {
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.text("Receipt", 10, 10);
-
-
-  doc.autoTable({ html: '#receipt-table' }); 
-  doc.autoTable({ html: '#payment-summary' }); 
-
-  doc.save('receipt.pdf');
-  return true; 
-};
-
-const downloadReceipt = async (receiptDetails) => {
-    try {
-        const doc = new jsPDF();
-
-        // Add header
-        doc.setFontSize(20);
-        doc.text('Receipt', 105, 15, { align: 'center' });
-
-        // Add client info
-        doc.setFontSize(12);
-        doc.text(`Client: ${receiptDetails.clients?.name || 'N/A'}`, 20, 30);
-        doc.text(`Phone: ${receiptDetails.clients?.phone || 'N/A'}`, 20, 37);
-        doc.text(`Date: ${new Date(receiptDetails.created_at).toLocaleDateString()}`, 20, 44);
-
-        // Add prescription details
-        doc.text('Prescription:', 20, 55);
-        doc.autoTable({
-            startY: 60,
-            head: [['Eye', 'SPH', 'CYL', 'AXE']],
-            body: [
-                ['Right Eye', 
-                 receiptDetails.right_eye_sph || 'N/A', 
-                 receiptDetails.right_eye_cyl || 'N/A', 
-                 receiptDetails.right_eye_axe || 'N/A'],
-                ['Left Eye', 
-                 receiptDetails.left_eye_sph || 'N/A', 
-                 receiptDetails.left_eye_cyl || 'N/A', 
-                 receiptDetails.left_eye_axe || 'N/A'],
-            ],
-        });
-
-        // Add items table
-        const items = receiptDetails.receipt_items || [];
-        doc.autoTable({
-            startY: doc.autoTable.previous.finalY + 20,
-            head: [['Item', 'Quantity', 'Price', 'Total']],
-            body: items.map(item => [
-                item.custom_item_name || item.products?.name || 'N/A',
-                item.quantity,
-                `$${item.price.toFixed(2)}`,
-                `$${(item.quantity * item.price).toFixed(2)}`
-            ]),
-        });
-
-        // Add totals
-        const startY = doc.autoTable.previous.finalY + 10;
-        doc.text(`Subtotal: $${receiptDetails.subtotal.toFixed(2)}`, 150, startY, { align: 'right' });
-        doc.text(`Tax: $${receiptDetails.tax.toFixed(2)}`, 150, startY + 7, { align: 'right' });
-        doc.text(`Discount (${receiptDetails.discount_percentage}%): $${receiptDetails.discount_amount.toFixed(2)}`, 150, startY + 14, { align: 'right' });
-        doc.text(`Total: $${receiptDetails.total.toFixed(2)}`, 150, startY + 21, { align: 'right' });
-        doc.text(`Advance Payment: $${receiptDetails.advance_payment.toFixed(2)}`, 150, startY + 28, { align: 'right' });
-        doc.text(`Balance: $${receiptDetails.balance.toFixed(2)}`, 150, startY + 35, { align: 'right' });
-
-        // Save the PDF
-        doc.save(`receipt-${receiptDetails.clients?.name}-${new Date(receiptDetails.created_at).toLocaleDateString()}.pdf`);
-        return true;
-    } catch (error) {
-        console.error('Error generating PDF:', error);
-        return false;
-    }
-
-        // Add items
-        const items = receiptDetails.items || [];
-        if (items.length > 0) {
-            doc.autoTable({
-                startY: receiptDetails.prescription ? doc.lastAutoTable.finalY + 10 : 60,
-                head: [['Item', 'Quantity', 'Price', 'Total']],
-                body: items.map(item => [
-                    item.name || 'N/A',
-                    item.quantity || '0',
-                    (item.price || 0).toFixed(2),
-                    (item.total || 0).toFixed(2)
-                ]),
-            });
-        }
-
-        // Add totals
-        const finalY = items.length > 0 ? doc.lastAutoTable.finalY + 10 : 80;
-        doc.text(`Subtotal: $${(receiptDetails.subtotal || 0).toFixed(2)}`, 140, finalY);
-        doc.text(`Tax: $${(receiptDetails.tax || 0).toFixed(2)}`, 140, finalY + 7);
-        doc.text(`Discount: $${(receiptDetails.discount || 0).toFixed(2)}`, 140, finalY + 14);
-        doc.text(`Total: $${(receiptDetails.total || 0).toFixed(2)}`, 140, finalY + 21);
-        doc.text(`Advance Payment: $${(receiptDetails.advancePayment || 0).toFixed(2)}`, 140, finalY + 28);
-        doc.text(`Balance: $${(receiptDetails.balance || 0).toFixed(2)}`, 140, finalY + 35);
-
-        // Save the PDF
-        doc.save(`receipt-${receiptDetails.clientName}-${receiptDetails.date}.pdf`);
-        return true;
-    } catch (error) {
-        console.error('Error generating PDF:', error);
-        return false;
-    }
-};
