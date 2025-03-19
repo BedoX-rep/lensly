@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,29 +9,37 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Edit, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { getClients, addClient, updateClient, deleteClient } from "@/integrations/supabase/queries";
 
-// Temp mock data
-const mockClients = [
-  { id: "1", name: "John Doe", phone: "555-123-4567" },
-  { id: "2", name: "Jane Smith", phone: "555-987-6543" },
-  { id: "3", name: "Robert Johnson", phone: "555-456-7890" },
-  { id: "4", name: "Sarah Williams", phone: "555-789-0123" },
-  { id: "5", name: "Michael Brown", phone: "555-321-6547" },
-];
-
-interface ClientFormData {
+interface Client {
+  id: string;
   name: string;
   phone: string;
 }
 
 const Clients = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentClient, setCurrentClient] = useState<{ id: string; name: string; phone: string } | null>(null);
-  const [formData, setFormData] = useState<ClientFormData>({ name: "", phone: "" });
+  const [formData, setFormData] = useState<{ name: string; phone: string }>({ name: "", phone: "" });
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredClients = mockClients.filter(client => 
+  useEffect(() => {
+    const loadClients = async () => {
+      setIsLoading(true);
+      const data = await getClients();
+      setClients(data);
+      setIsLoading(false);
+    };
+    
+    loadClients();
+  }, []);
+
+  const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     client.phone.includes(searchQuery)
   );
@@ -41,19 +49,21 @@ const Clients = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddClient = () => {
+  const handleAddClient = async () => {
     if (!formData.name || !formData.phone) {
       toast.error("Please enter both name and phone number");
       return;
     }
     
-    // In a real app, we would add to the database here
-    toast.success(`Client ${formData.name} added successfully`);
-    setFormData({ name: "", phone: "" });
-    setIsAddDialogOpen(false);
+    const newClient = await addClient(formData.name, formData.phone);
+    if (newClient) {
+      setClients(prev => [...prev, newClient]);
+      setFormData({ name: "", phone: "" });
+      setIsAddDialogOpen(false);
+    }
   };
 
-  const handleEditClient = () => {
+  const handleEditClient = async () => {
     if (!currentClient) return;
     
     if (!formData.name || !formData.phone) {
@@ -61,9 +71,15 @@ const Clients = () => {
       return;
     }
     
-    // In a real app, we would update the database here
-    toast.success(`Client ${formData.name} updated successfully`);
-    setIsEditDialogOpen(false);
+    const updatedClient = await updateClient(currentClient.id, formData.name, formData.phone);
+    if (updatedClient) {
+      setClients(prev => 
+        prev.map(client => 
+          client.id === updatedClient.id ? updatedClient : client
+        )
+      );
+      setIsEditDialogOpen(false);
+    }
   };
 
   const openEditDialog = (client: { id: string; name: string; phone: string }) => {
@@ -72,13 +88,15 @@ const Clients = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteClient = (clientId: string, clientName: string) => {
-    // In a real app, we would delete from the database here
-    toast.success(`Client ${clientName} deleted successfully`);
+  const handleDeleteClient = async (clientId: string, clientName: string) => {
+    const success = await deleteClient(clientId);
+    if (success) {
+      setClients(prev => prev.filter(client => client.id !== clientId));
+    }
   };
 
   const viewClientHistory = (clientId: string, clientName: string) => {
-    // In a real app, we would navigate to client history page
+    // Navigate to client receipts page in the future
     toast.info(`Viewing history for ${clientName}`);
   };
 
@@ -195,7 +213,13 @@ const Clients = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredClients.length > 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center">
+                      Loading clients...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredClients.length > 0 ? (
                   filteredClients.map((client) => (
                     <TableRow key={client.id}>
                       <TableCell className="font-medium">{client.name}</TableCell>
