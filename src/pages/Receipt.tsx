@@ -55,6 +55,7 @@ const Receipt = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [productSearchQuery, setProductSearchQuery] = useState(""); // Added product search query state
+  const [clientSearchQuery, setClientSearchQuery] = useState(""); // Added client search query state
 
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -86,6 +87,7 @@ const Receipt = () => {
       setClients(clientsData);
       setProducts(productsData);
       setFilteredProducts(productsData);
+      setFilteredClients(clientsData); // Initialize filteredClients with all clients
       setIsLoading(false);
     };
 
@@ -200,10 +202,11 @@ const Receipt = () => {
     const newClient = await addClient(newClientName, newClientPhone);
     if (newClient) {
       setClients(prev => [...prev, newClient]);
+      setFilteredClients(prev => [...prev, newClient]); // Update filteredClients as well
       setNewClientName("");
       setNewClientPhone("");
       setShowNewClientForm(false);
-      setSelectedClient(newClient.id);
+      setSelectedClient(newClient.id); // Automatically select the new client
     }
   };
 
@@ -262,6 +265,15 @@ const Receipt = () => {
     setFilteredProducts(filtered);
   };
 
+  const handleClientSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const filtered = clients.filter(client =>
+      client.name.toLowerCase().includes(searchTerm) ||
+      client.phone.toLowerCase().includes(searchTerm)
+    );
+    setFilteredClients(filtered);
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -312,26 +324,19 @@ const Receipt = () => {
                         </Button>
                       </div>
                       <div className="flex flex-col space-y-2">
+                        <Input
+                          type="text"
+                          placeholder="Search clients..."
+                          value={clientSearchQuery}
+                          onChange={handleClientSearch}
+                        />
                         <Select value={selectedClient} onValueChange={handleClientSelection}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a client" />
                           </SelectTrigger>
                           <SelectContent>
-                            <div className="px-3 pb-2">
-                              <Input
-                                placeholder="Search clients..."
-                                className="h-8"
-                                onChange={(e) => {
-                                  const searchTerm = e.target.value.toLowerCase();
-                                  const filteredClients = clients.filter(client =>
-                                    client.name.toLowerCase().includes(searchTerm) ||
-                                    client.phone.toLowerCase().includes(searchTerm)
-                                  );
-                                  setFilteredClients(filteredClients);
-                                }}
-                              />
-                            </div>
-                            {filteredClients.map(client => (
+                            <SelectItem value="new">+ Add New Client</SelectItem>
+                            {filteredClients.map((client) => (
                               <SelectItem key={client.id} value={client.id}>
                                 {client.name} - {client.phone}
                               </SelectItem>
