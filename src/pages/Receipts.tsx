@@ -405,7 +405,7 @@ const printReceipt = (receiptDetails) => {
   const doc = new jsPDF();
   doc.setFontSize(16);
   doc.text("Receipt", 10, 10);
-  
+
 
   doc.autoTable({ html: '#receipt-table' }); 
   doc.autoTable({ html: '#payment-summary' }); 
@@ -414,23 +414,57 @@ const printReceipt = (receiptDetails) => {
   return true; 
 };
 
-const downloadReceipt = async (receiptDetails) => {
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.text("Receipt", 10, 10);
-  
+const downloadReceipt = async (receiptDetails: any) => {
+    try {
+        const doc = new jsPDF();
 
-  doc.autoTable({ html: '#receipt-table' }); 
-  doc.autoTable({ html: '#payment-summary' }); 
+        // Add header
+        doc.setFontSize(20);
+        doc.text('Receipt', 105, 15, { align: 'center' });
 
-  const pdfBlob = doc.output('blob');
-  const url = URL.createObjectURL(pdfBlob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'receipt.pdf';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  return true; 
+        // Add client info
+        doc.setFontSize(12);
+        doc.text(`Client: ${receiptDetails.clientName}`, 20, 30);
+        doc.text(`Phone: ${receiptDetails.phone}`, 20, 37);
+        doc.text(`Date: ${receiptDetails.date}`, 20, 44);
+
+        // Add prescription details
+        doc.text('Prescription:', 20, 55);
+        doc.autoTable({
+            startY: 60,
+            head: [['Eye', 'SPH', 'CYL', 'AXE']],
+            body: [
+                ['Right Eye', receiptDetails.prescription.rightEye.sph, receiptDetails.prescription.rightEye.cyl, receiptDetails.prescription.rightEye.axe],
+                ['Left Eye', receiptDetails.prescription.leftEye.sph, receiptDetails.prescription.leftEye.cyl, receiptDetails.prescription.leftEye.axe],
+            ],
+        });
+
+        // Add items
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 10,
+            head: [['Item', 'Quantity', 'Price', 'Total']],
+            body: receiptDetails.items.map((item: any) => [
+                item.name,
+                item.quantity,
+                item.price.toFixed(2),
+                item.total.toFixed(2)
+            ]),
+        });
+
+        // Add totals
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.text(`Subtotal: $${receiptDetails.subtotal.toFixed(2)}`, 140, finalY);
+        doc.text(`Tax: $${receiptDetails.tax.toFixed(2)}`, 140, finalY + 7);
+        doc.text(`Discount: $${receiptDetails.discount.toFixed(2)}`, 140, finalY + 14);
+        doc.text(`Total: $${receiptDetails.total.toFixed(2)}`, 140, finalY + 21);
+        doc.text(`Advance Payment: $${receiptDetails.advancePayment.toFixed(2)}`, 140, finalY + 28);
+        doc.text(`Balance: $${receiptDetails.balance.toFixed(2)}`, 140, finalY + 35);
+
+        // Save the PDF
+        doc.save(`receipt-${receiptDetails.clientName}-${receiptDetails.date}.pdf`);
+        return true;
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        return false;
+    }
 };
