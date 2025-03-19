@@ -5,22 +5,17 @@ import productsData from '../../attached_assets/products.json';
 async function importProducts() {
   console.log('Starting product import...');
   
-  for (const product of productsData) {
-    const { data, error } = await supabase
-      .from('products')
-      .insert([{
-        name: product.name,
-        price: product.price
-      }]);
-      
-    if (error) {
-      console.error(`Error importing ${product.name}:`, error);
-    } else {
-      console.log(`Imported: ${product.name}`);
-    }
+  const { data, error } = await supabase
+    .from('products')
+    .insert(productsData);
+    
+  if (error) {
+    console.error('Error importing products:', error);
+    return;
   }
   
-  console.log('Import completed');
+  console.log('Successfully imported all products');
 }
 
 importProducts();
+</new_str>
