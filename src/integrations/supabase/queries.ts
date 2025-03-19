@@ -260,36 +260,48 @@ export async function createReceipt(receipt: any, items: any[]) {
 }
 export async function updateProductPosition(id: string, newPosition: number) {
   try {
-    const { data: movedProduct } = await supabase
+    // Get all products to find current positions
+    const { data: products } = await supabase
       .from('products')
-      .select('position')
-      .eq('id', id)
-      .single();
+      .select('*')
+      .order('position');
+    
+    if (!products) return false;
 
+    const movedProduct = products.find(p => p.id === id);
     if (!movedProduct) return false;
 
-    const oldPosition = movedProduct.position;
+    // Calculate new positions for all products
+    const updatedProducts = products.map((product, index) => {
+      if (index === newPosition) {
+        return { ...movedProduct, position: index };
+      }
+      const pos = index >= newPosition ? index + 1 : index;
+      return { ...product, position: pos };
+    });
 
-    // Simple update for the moved item
-    const { error: updateError } = await supabase
+    // Filter out the moved product's original position
+    const filteredProducts = updatedProducts.filter(p => p.id !== id);
+
+    // Update all positions in a single transaction
+    const { error } = await supabase
+      .from('products')
+      .upsert(filteredProducts)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating positions:', error);
+      return false;
+    }
+
+    // Update the moved product's position
+    const { error: movedError } = await supabase
       .from('products')
       .update({ position: newPosition })
       .eq('id', id);
 
-    if (updateError) {
-      console.error('Error updating position:', updateError);
-      return false;
-    }
-
-    // Update other affected items
-    const { error: batchError } = await supabase.rpc('update_product_positions', {
-      p_moved_id: id,
-      p_old_pos: oldPosition,
-      p_new_pos: newPosition
-    });
-
-    if (batchError) {
-      console.error('Error updating other positions:', batchError);
+    if (movedError) {
+      console.error('Error updating moved product position:', movedError);
       return false;
     }
 
@@ -298,9 +310,6 @@ export async function updateProductPosition(id: string, newPosition: number) {
     console.error('Error in updateProductPosition:', error);
     return false;
   }
-  
-  if (error) {
-    console.error('Error updating product positions:', error);
     toast.error('Failed to update product positions');
     return false;
   }
