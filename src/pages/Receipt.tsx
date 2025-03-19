@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, FileText, Eye, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { getClients, getProducts, addClient, createReceipt } from "@/integrations/supabase/queries";
+import { getClients, getProducts, addClient, createReceipt, getReceiptById, getReceiptItems } from "@/integrations/supabase/queries";
 
 interface Client {
   id: string;
@@ -147,6 +147,32 @@ const Receipt = () => {
       const price = parseFloat(customItemPrice);
       const qty = parseInt(quantity) || 1;
       if (!isNaN(price) && price > 0) {
+
+const handleSaveReceipt = async () => {
+  if (!selectedClient || items.length === 0) {
+    toast.error('Please select a client and add items');
+    return;
+  }
+
+  const receipt = {
+    client_id: selectedClient.id,
+    total_amount: items.reduce((sum, item) => sum + item.total, 0),
+    created_at: new Date().toISOString()
+  };
+
+  const result = await createReceipt(receipt, items.map(item => ({
+    product_id: item.productId,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    total: item.total
+  })));
+
+  if (result) {
+    navigate('/receipts');
+  }
+};
+
         const newItem: ReceiptItem = {
           id: Date.now().toString(),
           name: customItemName,
@@ -627,7 +653,7 @@ const Receipt = () => {
                   <Printer className="h-4 w-4" /> Print
                 </Button>
                 <Button onClick={handleSaveReceipt} className="gap-1">
-                  <FileText className="h-4 w-4" /> Save Receipt
+                  <FileText className="h-4 w-4" onClick={handleSaveReceipt} /> Save Receipt
                 </Button>
               </CardFooter>
             </Card>
