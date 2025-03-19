@@ -343,41 +343,43 @@ const getReceipts = async () => {
 };
 
 const getReceiptById = async (receiptId: string) => {
-  const { data, error } = await supabase
-    .from('receipts')
-    .select(`
-      *,
-      clients (
-        name,
-        phone
-      )
-    `)
-    .eq('id', receiptId)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('receipts')
+      .select(`
+        *,
+        clients (
+          name,
+          phone
+        )
+      `)
+      .eq('id', receiptId)
+      .single();
 
-  if (error) {
+    if (error) throw error;
+    return data;
+  } catch (error) {
     console.error('Error fetching receipt:', error);
     return null;
   }
-
-  return data;
 };
 
 const getReceiptItems = async (receiptId: string) => {
-  const { data, error } = await supabase
-    .from('receipt_items')
-    .select(`
-      *,
-      products (
-        name
-      )
-    `)
-    .eq('receipt_id', receiptId);
+  try {
+    const { data, error } = await supabase
+      .from('receipt_items')
+      .select(`
+        *,
+        products (
+          name
+        )
+      `)
+      .eq('receipt_id', receiptId);
 
-  if (error) {
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
     console.error('Error fetching receipt items:', error);
     return [];
   }
-
-  return data;
 };
