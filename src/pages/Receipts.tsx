@@ -357,6 +357,7 @@ const getReceiptDetails = async (receiptId: string) => {
             receipt_items (
                 quantity,
                 price,
+                custom_item_name,
                 products (
                     name
                 )
@@ -368,7 +369,7 @@ const getReceiptDetails = async (receiptId: string) => {
     if (receiptError) throw receiptError;
 
     const items = receipt.receipt_items.map(item => ({
-        name: item.products.name,
+        name: item.custom_item_name || item.products.name,
         price: item.price,
         quantity: item.quantity,
         total: item.price * item.quantity
