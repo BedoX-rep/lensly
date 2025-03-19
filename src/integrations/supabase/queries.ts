@@ -259,14 +259,47 @@ export async function createReceipt(receipt: any, items: any[]) {
   return receiptData;
 }
 export async function updateProductPosition(id: string, newPosition: number) {
+  // First get all products to determine the position updates
+  const { data: products } = await supabase
+    .from('products')
+    .select('*')
+    .order('position');
+
+  if (!products) return false;
+
+  // Get the product being moved
+  const movingProduct = products.find(p => p.id === id);
+  if (!movingProduct) return false;
+
+  const oldPosition = movingProduct.position;
+  
+  // Update positions of all affected products
+  const updates = products.map(product => {
+    if (product.id === id) {
+      return { ...product, position: newPosition };
+    } else if (
+      oldPosition < newPosition && 
+      product.position > oldPosition && 
+      product.position <= newPosition
+    ) {
+      return { ...product, position: product.position - 1 };
+    } else if (
+      oldPosition > newPosition && 
+      product.position >= newPosition && 
+      product.position < oldPosition
+    ) {
+      return { ...product, position: product.position + 1 };
+    }
+    return product;
+  });
+
   const { error } = await supabase
     .from('products')
-    .update({ position: newPosition })
-    .eq('id', id);
+    .upsert(updates, { onConflict: 'id' });
   
   if (error) {
-    console.error('Error updating product position:', error);
-    toast.error('Failed to update product position');
+    console.error('Error updating product positions:', error);
+    toast.error('Failed to update product positions');
     return false;
   }
   
