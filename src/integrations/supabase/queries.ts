@@ -1,4 +1,3 @@
-
 import { supabase } from "./client";
 import { toast } from "sonner";
 
@@ -8,13 +7,13 @@ export async function getProducts() {
     .from('products')
     .select('*')
     .order('position', { ascending: true });
-  
+
   if (error) {
     console.error('Error fetching products:', error);
     toast.error('Failed to load products');
     return [];
   }
-  
+
   return data || [];
 }
 
@@ -24,13 +23,13 @@ export async function addProduct(name: string, price: number) {
     .insert([{ name, price }])
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error adding product:', error);
     toast.error('Failed to add product');
     return null;
   }
-  
+
   toast.success(`Product ${name} added successfully`);
   return data;
 }
@@ -42,13 +41,13 @@ export async function updateProduct(id: string, name: string, price: number) {
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error updating product:', error);
     toast.error('Failed to update product');
     return null;
   }
-  
+
   toast.success(`Product ${name} updated successfully`);
   return data;
 }
@@ -58,13 +57,13 @@ export async function deleteProduct(id: string) {
     .from('products')
     .delete()
     .eq('id', id);
-  
+
   if (error) {
     console.error('Error deleting product:', error);
     toast.error('Failed to delete product');
     return false;
   }
-  
+
   toast.success('Product deleted successfully');
   return true;
 }
@@ -75,13 +74,13 @@ export async function getClients() {
     .from('clients')
     .select('*')
     .order('name', { ascending: true });
-  
+
   if (error) {
     console.error('Error fetching clients:', error);
     toast.error('Failed to load clients');
     return [];
   }
-  
+
   return data || [];
 }
 
@@ -91,13 +90,13 @@ export async function getClientById(id: string) {
     .select('*')
     .eq('id', id)
     .single();
-  
+
   if (error) {
     console.error('Error fetching client:', error);
     toast.error('Failed to load client');
     return null;
   }
-  
+
   return data;
 }
 
@@ -107,13 +106,13 @@ export async function addClient(name: string, phone: string) {
     .insert([{ name, phone }])
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error adding client:', error);
     toast.error('Failed to add client');
     return null;
   }
-  
+
   toast.success(`Client ${name} added successfully`);
   return data;
 }
@@ -125,13 +124,13 @@ export async function updateClient(id: string, name: string, phone: string) {
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error updating client:', error);
     toast.error('Failed to update client');
     return null;
   }
-  
+
   toast.success(`Client ${name} updated successfully`);
   return data;
 }
@@ -141,13 +140,13 @@ export async function deleteClient(id: string) {
     .from('clients')
     .delete()
     .eq('id', id);
-  
+
   if (error) {
     console.error('Error deleting client:', error);
     toast.error('Failed to delete client');
     return false;
   }
-  
+
   toast.success('Client deleted successfully');
   return true;
 }
@@ -161,13 +160,13 @@ export async function getReceipts() {
       clients (name, phone)
     `)
     .order('created_at', { ascending: false });
-  
+
   if (error) {
     console.error('Error fetching receipts:', error);
     toast.error('Failed to load receipts');
     return [];
   }
-  
+
   return data || [];
 }
 
@@ -180,13 +179,13 @@ export async function getReceiptById(id: string) {
     `)
     .eq('id', id)
     .single();
-  
+
   if (error) {
     console.error('Error fetching receipt:', error);
     toast.error('Failed to load receipt');
     return null;
   }
-  
+
   return data;
 }
 
@@ -198,13 +197,13 @@ export async function getReceiptItems(receiptId: string) {
       products (name)
     `)
     .eq('receipt_id', receiptId);
-  
+
   if (error) {
     console.error('Error fetching receipt items:', error);
     toast.error('Failed to load receipt items');
     return [];
   }
-  
+
   return data || [];
 }
 
@@ -214,13 +213,13 @@ export async function getClientReceipts(clientId: string) {
     .select('*')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
-  
+
   if (error) {
     console.error('Error fetching client receipts:', error);
     toast.error('Failed to load client receipts');
     return [];
   }
-  
+
   return data || [];
 }
 
@@ -231,79 +230,75 @@ export async function createReceipt(receipt: any, items: any[]) {
     .insert([receipt])
     .select()
     .single();
-  
+
   if (receiptError) {
     console.error('Error creating receipt:', receiptError);
     toast.error('Failed to create receipt');
     return null;
   }
-  
+
   // Add receipt ID to items
   const itemsWithReceiptId = items.map(item => ({
     ...item,
     receipt_id: receiptData.id
   }));
-  
+
   // Insert items
   const { error: itemsError } = await supabase
     .from('receipt_items')
     .insert(itemsWithReceiptId);
-  
+
   if (itemsError) {
     console.error('Error adding receipt items:', itemsError);
     toast.error('Failed to add receipt items');
     return null;
   }
-  
+
   toast.success('Receipt created successfully');
   return receiptData;
 }
 export async function updateProductPosition(id: string, newPosition: number) {
   try {
-    const { data: movedProduct } = await supabase
+    // Get current position of moved product
+    const { data: product } = await supabase
       .from('products')
       .select('position')
       .eq('id', id)
       .single();
 
-    if (!movedProduct) return false;
+    if (!product) return false;
+    const oldPosition = product.position;
 
-    const oldPosition = movedProduct.position;
-
-    // Simple update for the moved item
-    const { error: updateError } = await supabase
+    // Update position of moved product
+    const { error } = await supabase
       .from('products')
       .update({ position: newPosition })
       .eq('id', id);
 
+    if (error) {
+      console.error('Error updating position:', error);
+      return false;
+    }
+
+    // Update positions of other affected products
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({ 
+        position: oldPosition < newPosition 
+          ? supabase.raw('position - 1') 
+          : supabase.raw('position + 1')
+      })
+      .gte('position', Math.min(oldPosition, newPosition))
+      .lte('position', Math.max(oldPosition, newPosition))
+      .neq('id', id);
+
     if (updateError) {
-      console.error('Error updating position:', updateError);
+      console.error('Error updating other positions:', updateError);
       return false;
     }
-
-    // Update other affected items
-    const { error: batchError } = await supabase.rpc('update_product_positions', {
-      p_moved_id: id,
-      p_old_pos: oldPosition,
-      p_new_pos: newPosition
-    });
-
-    if (batchError) {
-      console.error('Error updating other positions:', batchError);
-      return false;
-    }
-
     return true;
   } catch (error) {
     console.error('Error in updateProductPosition:', error);
     return false;
   }
-  
-  if (error) {
-    console.error('Error updating product positions:', error);
-    toast.error('Failed to update product positions');
-    return false;
-  }
-  
-  return true;
 }
