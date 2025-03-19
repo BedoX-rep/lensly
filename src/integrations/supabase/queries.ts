@@ -259,43 +259,45 @@ export async function createReceipt(receipt: any, items: any[]) {
   return receiptData;
 }
 export async function updateProductPosition(id: string, newPosition: number) {
-  // First get all products to determine the position updates
-  const { data: products } = await supabase
-    .from('products')
-    .select('*')
-    .order('position');
+  try {
+    const { data: movedProduct } = await supabase
+      .from('products')
+      .select('position')
+      .eq('id', id)
+      .single();
 
-  if (!products) return false;
+    if (!movedProduct) return false;
 
-  // Get the product being moved
-  const movingProduct = products.find(p => p.id === id);
-  if (!movingProduct) return false;
+    const oldPosition = movedProduct.position;
 
-  const oldPosition = movingProduct.position;
-  
-  // Update positions of all affected products
-  const updates = products.map(product => {
-    if (product.id === id) {
-      return { ...product, position: newPosition };
-    } else if (
-      oldPosition < newPosition && 
-      product.position > oldPosition && 
-      product.position <= newPosition
-    ) {
-      return { ...product, position: product.position - 1 };
-    } else if (
-      oldPosition > newPosition && 
-      product.position >= newPosition && 
-      product.position < oldPosition
-    ) {
-      return { ...product, position: product.position + 1 };
+    // Simple update for the moved item
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({ position: newPosition })
+      .eq('id', id);
+
+    if (updateError) {
+      console.error('Error updating position:', updateError);
+      return false;
     }
-    return product;
-  });
 
-  const { error } = await supabase
-    .from('products')
-    .upsert(updates, { onConflict: 'id' });
+    // Update other affected items
+    const { error: batchError } = await supabase.rpc('update_product_positions', {
+      p_moved_id: id,
+      p_old_pos: oldPosition,
+      p_new_pos: newPosition
+    });
+
+    if (batchError) {
+      console.error('Error updating other positions:', batchError);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in updateProductPosition:', error);
+    return false;
+  }
   
   if (error) {
     console.error('Error updating product positions:', error);

@@ -45,19 +45,24 @@ export default function Products() {
   const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
 
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+    
     const items = Array.from(products);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    const updatedItems = items.map((item, index) => ({
-      ...item,
-      position: index,
-    }));
-
-    setProducts(updatedItems);
-
+    const [movedItem] = items.splice(sourceIndex, 1);
+    items.splice(destinationIndex, 0, movedItem);
+    
+    // Optimistically update the UI
+    setProducts(items);
+    
     // Update position in database
-    await updateProductPosition(reorderedItem.id, result.destination.index);
+    const success = await updateProductPosition(movedItem.id, destinationIndex);
+    
+    if (!success) {
+      // Revert to original order if update fails
+      setProducts(products);
+      toast.error("Failed to update product position");
+    }
   };
 
   const filteredProducts = products.filter(product =>
