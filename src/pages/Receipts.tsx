@@ -299,12 +299,35 @@ export default Receipts;
 
 // Placeholder functions -  replace with your actual implementations
 const getReceipts = async () => {
-  // Fetch receipts from your data source
-  //Example using a fake delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return [
-    { id: "6", clientName: "New Client", date: "2024-05-20", total: 100.00, balance: 0, status: "Paid" }
-  ];
+  const { data: receiptsData, error } = await supabase
+    .from('receipts')
+    .select(`
+      id,
+      created_at,
+      total,
+      balance,
+      advance_payment,
+      clients (
+        name,
+        phone
+      )
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching receipts:', error);
+    toast.error('Failed to load receipts');
+    return [];
+  }
+
+  return receiptsData.map(receipt => ({
+    id: receipt.id,
+    clientName: receipt.clients?.name || 'Unknown',
+    date: new Date(receipt.created_at).toLocaleDateString(),
+    total: receipt.total,
+    balance: receipt.balance,
+    status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
+  }));
 };
 
 
