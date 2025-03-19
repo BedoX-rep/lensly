@@ -1,31 +1,19 @@
-
-import { supabase } from '../integrations/supabase/client';
+import { addProduct } from '../integrations/supabase/queries';
 import products from '../../attached_assets/products.json';
 
 async function importProducts() {
-  try {
-    console.log('Starting product import...');
-    
-    // Using upsert to avoid duplicates
-    const { data, error } = await supabase
-      .from('products')
-      .upsert(
-        products.map(product => ({
-          name: product.name,
-          price: product.price
-        })),
-        { onConflict: 'name' }
-      );
+  console.log('Starting product import...');
 
-    if (error) {
-      throw error;
+  for (const product of products) {
+    try {
+      await addProduct(product.name, product.price);
+      console.log(`Added: ${product.name}`);
+    } catch (error) {
+      console.error(`Failed to add ${product.name}:`, error);
     }
-
-    console.log('Successfully imported all products');
-  } catch (error) {
-    console.error('Error importing products:', error);
   }
+
+  console.log('Import completed');
 }
 
-// Run the import
 importProducts();
