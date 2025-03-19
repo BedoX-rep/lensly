@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+
+import { supabase } from "@/integrations/supabase/client";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -311,29 +314,58 @@ const getReceipts = async () => {
 };
 
 
-const getReceiptDetails = async (receiptId) => {
-    // Fetch receipt details from your data source
-    // Example using fake data and delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+const getReceiptDetails = async (receiptId: string) => {
+    const { data: receipt, error: receiptError } = await supabase
+        .from('receipts')
+        .select(`
+            *,
+            clients (
+                name,
+                phone
+            ),
+            receipt_items (
+                quantity,
+                price,
+                products (
+                    name
+                )
+            )
+        `)
+        .eq('id', receiptId)
+        .single();
+
+    if (receiptError) throw receiptError;
+
+    const items = receipt.receipt_items.map(item => ({
+        name: item.products.name,
+        price: item.price,
+        quantity: item.quantity,
+        total: item.price * item.quantity
+    }));
+
     return {
-        id: receiptId,
-        clientName: "John Doe",
-        phone: "555-123-4567",
-        date: "2024-05-20",
+        id: receipt.id,
+        clientName: receipt.clients.name,
+        phone: receipt.clients.phone,
+        date: new Date(receipt.created_at).toLocaleDateString(),
         prescription: {
-          rightEye: { sph: "-2.00", cyl: "-0.50", axe: "180" },
-          leftEye: { sph: "-2.25", cyl: "-0.75", axe: "175" }
+            rightEye: { 
+                sph: receipt.right_eye_sph?.toString() || "0", 
+                cyl: receipt.right_eye_cyl?.toString() || "0", 
+                axe: receipt.right_eye_axe?.toString() || "0" 
+            },
+            leftEye: { 
+                sph: receipt.left_eye_sph?.toString() || "0", 
+                cyl: receipt.left_eye_cyl?.toString() || "0", 
+                axe: receipt.left_eye_axe?.toString() || "0" 
+            }
         },
-        items: [
-          { name: "Premium Eyeglasses", price: 120.00, quantity: 1, total: 120.00 },
-          { name: "Blue Light Filter", price: 85.50, quantity: 1, total: 85.50 },
-          { name: "Anti-Scratch Coating", price: 25.00, quantity: 1, total: 25.00 }
-        ],
-        subtotal: 230.50,
-        tax: 16.14,
-        discount: 0,
-        total: 246.64,
-        advancePayment: 246.64,
-        balance: 0
-      };
+        items,
+        subtotal: receipt.subtotal,
+        tax: receipt.tax,
+        discount: receipt.discount_amount || 0,
+        total: receipt.total,
+        advancePayment: receipt.advance_payment || 0,
+        balance: receipt.balance
+    };
 }
