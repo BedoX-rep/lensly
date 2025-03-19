@@ -299,10 +299,11 @@ const Receipt = () => {
         </div>
 
         <Tabs defaultValue="client" className="w-full">
-          <TabsList className="grid w-full md:w-[400px] grid-cols-3">
+          <TabsList className="grid w-full md:w-[400px] grid-cols-4">
             <TabsTrigger value="client">Client</TabsTrigger>
             <TabsTrigger value="prescription">Prescription</TabsTrigger>
             <TabsTrigger value="items">Items</TabsTrigger>
+            <TabsTrigger value="receipts">Receipts</TabsTrigger>
           </TabsList>
 
           <TabsContent value="client" className="space-y-4 mt-4">
