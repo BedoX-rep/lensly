@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search, Eye, FileText, Printer, Download, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { getReceipts as fetchReceipts } from "@/integrations/supabase/queries";
 
 
 const Receipts = () => {
@@ -297,35 +298,14 @@ const Receipts = () => {
 
 export default Receipts;
 
-// Placeholder functions -  replace with your actual implementations
 const getReceipts = async () => {
-  const { data: receiptsData, error } = await supabase
-    .from('receipts')
-    .select(`
-      id,
-      created_at,
-      total,
-      balance,
-      advance_payment,
-      clients (
-        name,
-        phone
-      )
-    `)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching receipts:', error);
-    toast.error('Failed to load receipts');
-    return [];
-  }
-
+  const receiptsData = await fetchReceipts();
   return receiptsData.map(receipt => ({
     id: receipt.id,
     clientName: receipt.clients?.name || 'Unknown',
     date: new Date(receipt.created_at).toLocaleDateString(),
-    total: receipt.total,
-    balance: receipt.balance,
+    total: receipt.total || 0,
+    balance: receipt.balance || 0,
     status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
   }));
 };
