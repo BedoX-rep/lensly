@@ -269,33 +269,29 @@ export async function updateProductPosition(id: string, newPosition: number) {
     if (!product) return false;
     const oldPosition = product.position;
 
-    // Update position of moved product
-    const { error } = await supabase
+    // Call the database function to update positions
+    const { error } = await supabase.rpc('update_product_positions', {
+      p_moved_id: id,
+      p_old_pos: oldPosition,
+      p_new_pos: newPosition
+    });
+
+    if (error) {
+      console.error('Error updating positions:', error);
+      return false;
+    }
+
+    // Update the moved product's position
+    const { error: updateError } = await supabase
       .from('products')
       .update({ position: newPosition })
       .eq('id', id);
 
-    if (error) {
-      console.error('Error updating position:', error);
-      return false;
-    }
-
-    // Update positions of other affected products
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({ 
-        position: oldPosition < newPosition 
-          ? supabase.raw('position - 1') 
-          : supabase.raw('position + 1')
-      })
-      .gte('position', Math.min(oldPosition, newPosition))
-      .lte('position', Math.max(oldPosition, newPosition))
-      .neq('id', id);
-
     if (updateError) {
-      console.error('Error updating other positions:', updateError);
+      console.error('Error updating moved product position:', updateError);
       return false;
     }
+
     return true;
   } catch (error) {
     console.error('Error in updateProductPosition:', error);
