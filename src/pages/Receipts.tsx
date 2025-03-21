@@ -213,7 +213,14 @@ const Receipts = () => {
                     <TableRow key={receipt.id}>
                       <TableCell className="font-medium">#{receipt.id.substring(0,8)}</TableCell>
                       <TableCell>{receipt.clientName}</TableCell>
-                      <TableCell>{receipt.date}</TableCell>
+                      <TableCell>
+                        <Input
+                          type="date"
+                          defaultValue={new Date(receipt.date).toISOString().split('T')[0]}
+                          onChange={(e) => updateReceiptDate(receipt.id, e.target.value)}
+                          className="w-32"
+                        />
+                      </TableCell>
                       <TableCell className="text-right">{receipt.total.toFixed(2)} DH</TableCell>
                       <TableCell>{receipt.advancePayment.toFixed(2)} DH</TableCell>
                       <TableCell>{receipt.balance.toFixed(2)} DH</TableCell>
@@ -615,12 +622,26 @@ const getReceipts = async () => {
   return receiptsData.map(receipt => ({
     id: receipt.id,
     clientName: receipt.clients?.name || 'Unknown',
-    date: new Date(receipt.created_at).toLocaleDateString(),
+    date: receipt.created_at,
     total: receipt.total || 0,
     advancePayment: receipt.advance_payment || 0,
     balance: receipt.balance || 0,
     status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
-  }));
+  }))
+  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+};
+
+const updateReceiptDate = async (receiptId: string, newDate: string) => {
+  try {
+    await supabase
+      .from('receipts')
+      .update({ created_at: newDate })
+      .eq('id', receiptId);
+    await loadReceipts();
+    toast.success('Receipt date updated successfully');
+  } catch (error) {
+    toast.error('Failed to update receipt date');
+  }
 };
 
 
