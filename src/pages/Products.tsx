@@ -124,7 +124,7 @@ export default function Products() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="price">Price ($)</Label>
+                  <Label htmlFor="price">Price (DH)</Label>
                   <Input
                     id="price"
                     name="price"
