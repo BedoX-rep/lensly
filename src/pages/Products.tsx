@@ -191,7 +191,7 @@ export default function Products() {
                                   </div>
                                 </TableCell>
                                 <TableCell>{product.name}</TableCell>
-                                <TableCell className="text-right">DH{product.price.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">{product.price.toFixed(2)} DH</TableCell>
                                 <TableCell>
                                   <div className="flex gap-2">
                                     <Button variant="ghost" size="icon" onClick={() => {/*Add Edit Functionality Here*/}}>
