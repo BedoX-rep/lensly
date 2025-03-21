@@ -251,9 +251,9 @@ const Receipts = () => {
                       {selectedReceipt.items.map((item, index) => (
                         <TableRow key={index}>
                           <TableCell>{item.name}</TableCell>
-                          <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">DH{item.price.toFixed(2)}</TableCell>
                           <TableCell className="text-right">{item.quantity}</TableCell>
-                          <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">DH{item.total.toFixed(2)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

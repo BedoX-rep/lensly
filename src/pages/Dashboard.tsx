@@ -49,7 +49,7 @@ const Dashboard = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard 
             title="Total Revenue" 
-            value={`$${stats?.totalRevenue.toFixed(2)}`}
+            value={`DH${stats?.totalRevenue.toFixed(2)}`}
             icon={<Eye className="h-4 w-4 text-muted-foreground" />}
             description="All time revenue" 
           />
