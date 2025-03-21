@@ -504,7 +504,7 @@ const Receipt = () => {
                           <SelectContent>
                             {filteredProducts.map((product) => (
                               <SelectItem key={product.id} value={product.id}>
-                                {product.name} - ${product.price.toFixed(2)}
+                                {product.name} - DH{product.price.toFixed(2)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -525,7 +525,7 @@ const Receipt = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="customItemPrice">Price ($)</Label>
+                      <Label htmlFor="customItemPrice">Price (DH)</Label>
                       <Input
                         id="customItemPrice"
                         type="number"
@@ -552,7 +552,7 @@ const Receipt = () => {
                       />
                       {calculateAssuranceTax() > 0 && (
                         <p className="text-sm text-muted-foreground mt-1">
-                          Assurance tax: ${calculateAssuranceTax().toFixed(2)}
+                          Assurance tax: DH{calculateAssuranceTax().toFixed(2)}
                         </p>
                       )}
                     </div>
@@ -603,9 +603,9 @@ const Receipt = () => {
                     } : null].filter(Boolean).map((item) => (
                       <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
-                        <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">DH{item.price.toFixed(2)}</TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>
-                        <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">DH{item.total.toFixed(2)}</TableCell>
                         <TableCell>
                           {item.id !== 'assurance-tax' && (
                             <Button
@@ -653,7 +653,7 @@ const Receipt = () => {
                           onChange={() => setDiscountType("amount")}
                           className="h-4 w-4"
                         />
-                        <Label htmlFor="discountAmount">Fixed Amount ($)</Label>
+                        <Label htmlFor="discountAmount">Fixed Amount (DH)</Label>
                       </div>
                     </div>
                     <Input
@@ -669,7 +669,7 @@ const Receipt = () => {
                   <div className="space-y-4">
                     <h3 className="font-medium">Advance Payment</h3>
                     <div className="space-y-2">
-                      <Label htmlFor="advancePayment">Amount ($)</Label>
+                      <Label htmlFor="advancePayment">Amount (DH)</Label>
                       <Input
                         id="advancePayment"
                         type="number"
@@ -687,23 +687,23 @@ const Receipt = () => {
                   <dl className="divide-y">
                     <div className="flex justify-between py-2">
                       <dt className="text-sm font-medium">Subtotal</dt>
-                      <dd className="text-sm font-medium">${calculateSubtotal().toFixed(2)}</dd>
+                      <dd className="text-sm font-medium">DH{calculateSubtotal().toFixed(2)}</dd>
                     </div>
                     <div className="flex justify-between py-2">
                       <dt className="text-sm font-medium">Tax</dt>
-                      <dd className="text-sm font-medium">${calculateTax().toFixed(2)}</dd>
+                      <dd className="text-sm font-medium">DH{calculateTax().toFixed(2)}</dd>
                     </div>
                     <div className="flex justify-between py-2">
                       <dt className="text-sm font-medium">Discount</dt>
-                      <dd className="text-sm font-medium">${calculateDiscount().toFixed(2)}</dd>
+                      <dd className="text-sm font-medium">DH{calculateDiscount().toFixed(2)}</dd>
                     </div>
                     <div className="flex justify-between py-2">
                       <dt className="text-sm font-medium">Total</dt>
-                      <dd className="text-sm font-medium">${calculateTotal().toFixed(2)}</dd>
+                      <dd className="text-sm font-medium">DH{calculateTotal().toFixed(2)}</dd>
                     </div>
                     <div className="flex justify-between py-2">
                       <dt className="text-sm font-medium">Advance Payment</dt>
-                      <dd className="text-sm font-medium">${advancePayment ? parseFloat(advancePayment).toFixed(2) : "0.00"}</dd>
+                      <dd className="text-sm font-medium">DH{advancePayment ? parseFloat(advancePayment).toFixed(2) : "0.00"}</dd>
                     </div>
                     <div className="flex justify-between py-2 font-bold">
                       <dt>Balance Due</dt>

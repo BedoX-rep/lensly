@@ -129,9 +129,9 @@ const Receipts = () => {
                       <TableCell className="font-medium">#{receipt.id}</TableCell>
                       <TableCell>{receipt.clientName}</TableCell>
                       <TableCell>{receipt.date}</TableCell>
-                      <TableCell className="text-right">${receipt.total.toFixed(2)}</TableCell>
-                      <TableCell>${(receipt.advancePayment || 0).toFixed(2)}</TableCell>
-                      <TableCell>${receipt.balance.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{receipt.total.toFixed(2)} DH</TableCell>
+                      <TableCell>{receipt.advancePayment.toFixed(2)} DH</TableCell>
+                      <TableCell>{receipt.balance.toFixed(2)} DH</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(receipt.status)}`}>
                           {receipt.status}
