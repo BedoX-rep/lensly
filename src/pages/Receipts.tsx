@@ -228,6 +228,9 @@ const Receipts = () => {
                       </div>
                     </div>
                   </div>
+                  <div className="mt-4">
+                    <span className="text-muted-foreground">ADD:</span> {selectedReceipt.prescription.add}
+                  </div>
                 </div>
 
                 <div>
@@ -363,7 +366,8 @@ const getReceiptDetails = async (receiptId: string) => {
                 sph: receipt.left_eye_sph?.toString() || "0", 
                 cyl: receipt.left_eye_cyl?.toString() || "0", 
                 axe: receipt.left_eye_axe?.toString() || "0" 
-            }
+            },
+            add: receipt.add_value?.toString() || "0"
         },
         items,
         subtotal: receipt.subtotal,
