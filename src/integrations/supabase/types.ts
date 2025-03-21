@@ -35,18 +35,21 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          position: number
           price: number
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          position?: number
           price: number
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          position?: number
           price?: number
         }
         Relationships: []
@@ -98,6 +101,7 @@ export type Database = {
       }
       receipts: {
         Row: {
+          add_value: number | null
           advance_payment: number | null
           balance: number
           client_id: string
@@ -111,12 +115,12 @@ export type Database = {
           right_eye_axe: number | null
           right_eye_cyl: number | null
           right_eye_sph: number | null
-          add_value: number | null
           subtotal: number
           tax: number
           total: number
         }
         Insert: {
+          add_value?: number | null
           advance_payment?: number | null
           balance?: number
           client_id: string
@@ -135,6 +139,7 @@ export type Database = {
           total?: number
         }
         Update: {
+          add_value?: number | null
           advance_payment?: number | null
           balance?: number
           client_id?: string
@@ -167,7 +172,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_positions: {
+        Args: {
+          moved_id: string
+          new_pos: number
+        }
+        Returns: undefined
+      }
+      update_product_positions: {
+        Args: {
+          p_moved_id: string
+          p_old_pos: number
+          p_new_pos: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
