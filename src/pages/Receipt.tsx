@@ -707,7 +707,7 @@ const Receipt = () => {
                     </div>
                     <div className="flex justify-between py-2 font-bold">
                       <dt>Balance Due</dt>
-                      <dd>${calculateBalance().toFixed(2)}</dd>
+                      <dd>{calculateBalance().toFixed(2)} DH</dd>
                     </div>
                   </dl>
                 </div>
