@@ -1,14 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmail } from "@/lib/auth-config";
-import { useAuth } from "@/lib/auth-config";
+import { signInWithEmail, useAuth } from "@/lib/auth-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
-const Login = () => {
+export default function Login() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
@@ -17,7 +16,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      navigate("/");
     }
   }, [isAuthenticated, navigate]);
 
@@ -26,12 +25,11 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await signInWithEmail(email, password);
+      const { data, error } = await signInWithEmail(email, password);
       if (error) {
         toast.error("Login failed: " + error.message);
-      } else {
+      } else if (data?.user) {
         toast.success("Login successful");
-        navigate("/");
       }
     } catch (err) {
       toast.error("An error occurred during login");
@@ -74,6 +72,4 @@ const Login = () => {
       </Card>
     </div>
   );
-};
-
-export default Login;
+}

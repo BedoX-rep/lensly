@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-config";
 import { Button } from "@/components/ui/button";
 
 const NavItem = ({ to, children }: { to: string; children: React.ReactNode }) => {
