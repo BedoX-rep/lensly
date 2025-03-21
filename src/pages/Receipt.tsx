@@ -504,7 +504,7 @@ const Receipt = () => {
                           <SelectContent>
                             {filteredProducts.map((product) => (
                               <SelectItem key={product.id} value={product.id}>
-                                {product.name} - DH{product.price.toFixed(2)}
+                                {product.name} - {product.price.toFixed(2)} DH
                               </SelectItem>
                             ))}
                           </SelectContent>
