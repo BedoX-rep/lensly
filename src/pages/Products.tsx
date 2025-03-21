@@ -47,17 +47,17 @@ export default function Products() {
 
     const sourceIndex = result.source.index;
     const destinationIndex = result.destination.index;
-    
+
     const items = Array.from(products);
     const [movedItem] = items.splice(sourceIndex, 1);
     items.splice(destinationIndex, 0, movedItem);
-    
+
     // Optimistically update the UI
     setProducts(items);
-    
+
     // Update position in database
     const success = await updateProductPosition(movedItem.id, destinationIndex);
-    
+
     if (!success) {
       // Revert to original order if update fails
       setProducts(products);
@@ -191,7 +191,7 @@ export default function Products() {
                                   </div>
                                 </TableCell>
                                 <TableCell>{product.name}</TableCell>
-                                <TableCell>${product.price.toFixed(2)}</TableCell>
+                                <TableCell className="text-right">DH{product.price.toFixed(2)}</TableCell>
                                 <TableCell>
                                   <div className="flex gap-2">
                                     <Button variant="ghost" size="icon" onClick={() => {/*Add Edit Functionality Here*/}}>
