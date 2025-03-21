@@ -257,6 +257,54 @@ export async function createReceipt(receipt: any, items: any[]) {
   toast.success('Receipt created successfully');
   return receiptData;
 }
+
+export async function updateReceipt(id: string, updatedFields: any) {
+  const { data, error } = await supabase
+    .from('receipts')
+    .update(updatedFields)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating receipt:', error);
+    toast.error('Failed to update receipt');
+    return null;
+  }
+
+  toast.success('Receipt updated successfully');
+  return data;
+}
+
+export async function deleteReceipt(id: string) {
+  // First delete all receipt items
+  const { error: itemsError } = await supabase
+    .from('receipt_items')
+    .delete()
+    .eq('receipt_id', id);
+
+  if (itemsError) {
+    console.error('Error deleting receipt items:', itemsError);
+    toast.error('Failed to delete receipt items');
+    return false;
+  }
+
+  // Then delete the receipt
+  const { error } = await supabase
+    .from('receipts')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting receipt:', error);
+    toast.error('Failed to delete receipt');
+    return false;
+  }
+
+  toast.success('Receipt deleted successfully');
+  return true;
+}
+
 export async function updateProductPosition(id: string, newPosition: number) {
   try {
     const { data: products, error } = await supabase

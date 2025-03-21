@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,47 +9,132 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Eye, FileText, Printer, Download, Calendar } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Search, Eye, FileText, Printer, Download, Calendar, Trash2, Edit, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { getReceipts as fetchReceipts } from "@/integrations/supabase/queries";
-
+import { getReceipts as fetchReceipts, deleteReceipt, updateReceipt } from "@/integrations/supabase/queries";
+import { useForm } from "react-hook-form";
 
 const Receipts = () => {
+  const navigate = useNavigate();
   const [receipts, setReceipts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedDateRange, setSelectedDateRange] = useState("all");
-  const [selectedReceipt, setSelectedReceipt] = useState(null); //Added to handle receipt details
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [selectedReceiptId, setSelectedReceiptId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const editForm = useForm({
+    defaultValues: {
+      advancePayment: 0,
+      rightEyeSph: "",
+      rightEyeCyl: "",
+      rightEyeAxe: "",
+      leftEyeSph: "",
+      leftEyeCyl: "",
+      leftEyeAxe: "",
+      addValue: ""
+    }
+  });
 
   useEffect(() => {
-    const loadReceipts = async () => {
-      const receiptsData = await getReceipts();
-      setReceipts(receiptsData);
-    };
-
     loadReceipts();
   }, []);
+
+  useEffect(() => {
+    if (selectedReceipt && isEditDialogOpen) {
+      editForm.reset({
+        advancePayment: selectedReceipt.advancePayment || 0,
+        rightEyeSph: selectedReceipt.prescription?.rightEye?.sph || "",
+        rightEyeCyl: selectedReceipt.prescription?.rightEye?.cyl || "",
+        rightEyeAxe: selectedReceipt.prescription?.rightEye?.axe || "",
+        leftEyeSph: selectedReceipt.prescription?.leftEye?.sph || "",
+        leftEyeCyl: selectedReceipt.prescription?.leftEye?.cyl || "",
+        leftEyeAxe: selectedReceipt.prescription?.leftEye?.axe || "",
+        addValue: selectedReceipt.prescription?.add || ""
+      });
+    }
+  }, [selectedReceipt, isEditDialogOpen]);
+
+  const loadReceipts = async () => {
+    const receiptsData = await getReceipts();
+    setReceipts(receiptsData);
+  };
 
   const filteredReceipts = receipts.filter(receipt => 
     receipt.clientName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleViewReceipt = async (receiptId: string) => {
-    const receiptDetails = await getReceiptDetails(receiptId); // Added function call
+  const handleViewReceipt = async (receiptId) => {
+    const receiptDetails = await getReceiptDetails(receiptId);
     setSelectedReceipt(receiptDetails);
     setIsViewDialogOpen(true);
   };
 
-  const handlePrintReceipt = (receiptId: string) => {
+  const handleEditReceipt = async (receiptId) => {
+    const receiptDetails = await getReceiptDetails(receiptId);
+    setSelectedReceipt(receiptDetails);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteReceipt = (receiptId) => {
+    setSelectedReceiptId(receiptId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handlePrintReceipt = (receiptId) => {
     toast.info(`Printing receipt #${receiptId}`);
   };
 
-  const handleDownloadReceipt = (receiptId: string) => {
+  const handleDownloadReceipt = (receiptId) => {
     toast.info(`Downloading receipt #${receiptId}`);
   };
 
-  const getStatusColor = (status: string) => {
+  const confirmDelete = async () => {
+    if (!selectedReceiptId) return;
+    
+    setIsLoading(true);
+    const success = await deleteReceipt(selectedReceiptId);
+    setIsLoading(false);
+    
+    if (success) {
+      loadReceipts();
+      setIsDeleteDialogOpen(false);
+      setSelectedReceiptId(null);
+    }
+  };
+
+  const onSubmitEdit = async (data) => {
+    if (!selectedReceipt) return;
+    
+    setIsLoading(true);
+    
+    const updatedFields = {
+      advance_payment: Number(data.advancePayment),
+      right_eye_sph: data.rightEyeSph ? Number(data.rightEyeSph) : null,
+      right_eye_cyl: data.rightEyeCyl ? Number(data.rightEyeCyl) : null,
+      right_eye_axe: data.rightEyeAxe ? Number(data.rightEyeAxe) : null,
+      left_eye_sph: data.leftEyeSph ? Number(data.leftEyeSph) : null,
+      left_eye_cyl: data.leftEyeCyl ? Number(data.leftEyeCyl) : null,
+      left_eye_axe: data.leftEyeAxe ? Number(data.leftEyeAxe) : null,
+      add_value: data.addValue ? Number(data.addValue) : null,
+      balance: selectedReceipt.total - Number(data.advancePayment)
+    };
+    
+    const result = await updateReceipt(selectedReceipt.id, updatedFields);
+    setIsLoading(false);
+    
+    if (result) {
+      loadReceipts();
+      setIsEditDialogOpen(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
     switch (status) {
       case "Paid":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
@@ -126,7 +212,7 @@ const Receipts = () => {
                 {filteredReceipts.length > 0 ? (
                   filteredReceipts.map((receipt) => (
                     <TableRow key={receipt.id}>
-                      <TableCell className="font-medium">#{receipt.id}</TableCell>
+                      <TableCell className="font-medium">#{receipt.id.substring(0,8)}</TableCell>
                       <TableCell>{receipt.clientName}</TableCell>
                       <TableCell>{receipt.date}</TableCell>
                       <TableCell className="text-right">{receipt.total.toFixed(2)} DH</TableCell>
@@ -145,6 +231,21 @@ const Receipts = () => {
                             onClick={() => handleViewReceipt(receipt.id)}
                           >
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEditReceipt(receipt.id)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="text-destructive hover:text-destructive/80" 
+                            onClick={() => handleDeleteReceipt(receipt.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
@@ -176,13 +277,14 @@ const Receipts = () => {
           </CardContent>
         </Card>
 
+        {/* View Receipt Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>Receipt #{selectedReceipt ? selectedReceipt.id : ''}</DialogTitle> {/*Conditional rendering for ID */}
+              <DialogTitle>Receipt #{selectedReceipt ? selectedReceipt.id.substring(0,8) : ''}</DialogTitle>
             </DialogHeader>
 
-            {selectedReceipt && ( //Conditional rendering of receipt details
+            {selectedReceipt && (
               <div className="space-y-6 py-4">
                 <div className="flex justify-between">
                   <div>
@@ -266,42 +368,240 @@ const Receipts = () => {
                     <dl className="divide-y">
                       <div className="flex justify-between py-2">
                         <dt className="text-sm font-medium">Subtotal</dt>
-                        <dd className="text-sm font-medium">${selectedReceipt.subtotal.toFixed(2)}</dd>
+                        <dd className="text-sm font-medium">DH{selectedReceipt.subtotal.toFixed(2)}</dd>
                       </div>
                       <div className="flex justify-between py-2">
                         <dt className="text-sm font-medium">Tax</dt>
-                        <dd className="text-sm font-medium">${selectedReceipt.tax.toFixed(2)}</dd>
+                        <dd className="text-sm font-medium">DH{selectedReceipt.tax.toFixed(2)}</dd>
                       </div>
                       <div className="flex justify-between py-2">
                         <dt className="text-sm font-medium">Discount</dt>
-                        <dd className="text-sm font-medium">${selectedReceipt.discount.toFixed(2)}</dd>
+                        <dd className="text-sm font-medium">DH{selectedReceipt.discount.toFixed(2)}</dd>
                       </div>
                       <div className="flex justify-between py-2">
                         <dt className="text-sm font-medium">Total</dt>
-                        <dd className="text-sm font-medium">${selectedReceipt.total.toFixed(2)}</dd>
+                        <dd className="text-sm font-medium">DH{selectedReceipt.total.toFixed(2)}</dd>
                       </div>
                       <div className="flex justify-between py-2">
                         <dt className="text-sm font-medium">Advance Payment</dt>
-                        <dd className="text-sm font-medium">${selectedReceipt.advancePayment.toFixed(2)}</dd>
+                        <dd className="text-sm font-medium">DH{selectedReceipt.advancePayment.toFixed(2)}</dd>
                       </div>
                       <div className="flex justify-between py-2 font-bold">
                         <dt>Balance Due</dt>
-                        <dd>${selectedReceipt.balance.toFixed(2)}</dd>
+                        <dd>DH{selectedReceipt.balance.toFixed(2)}</dd>
                       </div>
                     </dl>
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => handlePrintReceipt(selectedReceipt.id)} className="gap-1">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleEditReceipt(selectedReceipt.id)} 
+                    className="gap-1"
+                  >
+                    <Edit className="h-4 w-4" /> Edit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handlePrintReceipt(selectedReceipt.id)} 
+                    className="gap-1"
+                  >
                     <Printer className="h-4 w-4" /> Print
                   </Button>
-                  <Button variant="outline" onClick={() => handleDownloadReceipt(selectedReceipt.id)} className="gap-1">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleDownloadReceipt(selectedReceipt.id)} 
+                    className="gap-1"
+                  >
                     <Download className="h-4 w-4" /> Download PDF
                   </Button>
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Receipt Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Receipt</DialogTitle>
+            </DialogHeader>
+
+            {selectedReceipt && (
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(onSubmitEdit)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="rightEyeSph"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Right Eye SPH</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.25" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="rightEyeCyl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Right Eye CYL</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.25" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="rightEyeAxe"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Right Eye AXE</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="leftEyeSph"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Left Eye SPH</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.25" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="leftEyeCyl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Left Eye CYL</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.25" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="leftEyeAxe"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Left Eye AXE</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="addValue"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ADD Value</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.25" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="advancePayment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Advance Payment</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="number" 
+                              min="0" 
+                              max={selectedReceipt.total} 
+                              step="0.01" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsEditDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" /> Delete Receipt
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="py-4">
+              <p>Are you sure you want to delete this receipt? This action cannot be undone.</p>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={isLoading}
+              >
+                {isLoading ? "Deleting..." : "Delete Receipt"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -325,7 +625,7 @@ const getReceipts = async () => {
 };
 
 
-const getReceiptDetails = async (receiptId: string) => {
+const getReceiptDetails = async (receiptId) => {
     const { data: receipt, error: receiptError } = await supabase
         .from('receipts')
         .select(`
@@ -348,7 +648,7 @@ const getReceiptDetails = async (receiptId: string) => {
     if (receiptError) throw receiptError;
 
     const items = receipt.receipt_items.map(item => ({
-        name: item.products.name,
+        name: item.products?.name || item.custom_item_name || 'Unknown Item',
         price: item.price,
         quantity: item.quantity,
         total: item.price * item.quantity
