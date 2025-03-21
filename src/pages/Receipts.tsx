@@ -217,7 +217,13 @@ const Receipts = () => {
                         <Input
                           type="date"
                           defaultValue={new Date(receipt.date).toISOString().split('T')[0]}
-                          onChange={(e) => updateReceiptDate(receipt.id, e.target.value)}
+                          onBlur={async (e) => {
+                            const success = await updateReceipt(receipt.id, { created_at: e.target.value });
+                            if (success) {
+                              loadReceipts();
+                              toast.success('Date updated successfully');
+                            }
+                          }}
                           className="w-32"
                         />
                       </TableCell>
@@ -631,18 +637,7 @@ const getReceipts = async () => {
   .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
-const updateReceiptDate = async (receiptId: string, newDate: string) => {
-  try {
-    await supabase
-      .from('receipts')
-      .update({ created_at: newDate })
-      .eq('id', receiptId);
-    await loadReceipts();
-    toast.success('Receipt date updated successfully');
-  } catch (error) {
-    toast.error('Failed to update receipt date');
-  }
-};
+
 
 
 const getReceiptDetails = async (receiptId) => {
