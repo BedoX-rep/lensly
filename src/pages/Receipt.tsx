@@ -40,6 +40,7 @@ interface PrescriptionData {
   leftEyeSph: string;
   leftEyeCyl: string;
   leftEyeAxe: string;
+  add: string;
 }
 
 const Receipt = () => {
@@ -458,6 +459,18 @@ const Receipt = () => {
                           placeholder="175"
                         />
                       </div>
+                    </div>
+                  </div>
+                  <div className="col-span-2 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="add">ADD</Label>
+                      <Input
+                        id="add"
+                        name="add"
+                        value={prescription.add}
+                        onChange={handlePrescriptionChange}
+                        placeholder="+2.50"
+                      />
                     </div>
                   </div>
                 </div>
