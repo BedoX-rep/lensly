@@ -228,8 +228,11 @@ const Receipts = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4">
-                    <span className="text-muted-foreground">ADD:</span> {selectedReceipt.prescription.add}
+                  <div className="flex justify-center items-center py-2 border-t border-b border-muted mt-4">
+                    <div>
+                      <span className="text-muted-foreground font-medium">ADD:</span>{" "}
+                      <span className="font-medium">{selectedReceipt.prescription.add}</span>
+                    </div>
                   </div>
                 </div>
 
