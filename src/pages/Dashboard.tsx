@@ -6,7 +6,6 @@ import { useDashboardData, TimeRange } from "@/hooks/useDashboardData";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StatCard } from "@/components/StatCard";
 import { DashboardChart } from "@/components/DashboardChart";
-import { ProductsChart } from "@/components/ProductsChart";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -73,16 +72,11 @@ const Dashboard = () => {
           />
         </div>
 
-        <div className="grid gap-6 grid-cols-1 xl:grid-cols-3">
+        <div className="grid gap-6">
           <DashboardChart 
             data={stats?.monthlyRevenue || []}
             title="Revenue Trend"
             description="Monthly revenue for the last 6 months"
-          />
-          <ProductsChart 
-            data={stats?.topProducts || []}
-            title="Top Products"
-            description="By revenue"
           />
         </div>
 
