@@ -71,6 +71,7 @@ const Receipt = () => {
     leftEyeSph: "",
     leftEyeCyl: "",
     leftEyeAxe: "",
+    add: ""
   });
 
   const [discountType, setDiscountType] = useState<"percentage" | "amount">("percentage");
@@ -225,6 +226,7 @@ const Receipt = () => {
       left_eye_sph: prescription.leftEyeSph ? parseFloat(prescription.leftEyeSph) : null,
       left_eye_cyl: prescription.leftEyeCyl ? parseFloat(prescription.leftEyeCyl) : null,
       left_eye_axe: prescription.leftEyeAxe ? parseInt(prescription.leftEyeAxe) : null,
+      add_value: prescription.add ? parseFloat(prescription.add) : null,
       subtotal: calculateSubtotal(),
       tax: calculateTax(),
       discount_percentage: discountType === "percentage" ? (discountValue ? parseFloat(discountValue) : 0) : 0,

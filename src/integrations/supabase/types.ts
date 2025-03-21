@@ -111,6 +111,7 @@ export type Database = {
           right_eye_axe: number | null
           right_eye_cyl: number | null
           right_eye_sph: number | null
+          add_value: number | null
           subtotal: number
           tax: number
           total: number
