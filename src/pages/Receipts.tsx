@@ -224,7 +224,7 @@ const Receipts = () => {
                               toast.success('Date updated successfully');
                             }
                           }}
-                          className="w-32"
+                          className="w-40"
                         />
                       </TableCell>
                       <TableCell className="text-right">{receipt.total.toFixed(2)} DH</TableCell>
@@ -634,7 +634,7 @@ const getReceipts = async () => {
     balance: receipt.balance || 0,
     status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
   }))
-  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
 
