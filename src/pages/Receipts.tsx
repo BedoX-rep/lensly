@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -637,6 +636,7 @@ const getReceiptDetails = async (receiptId) => {
             receipt_items (
                 quantity,
                 price,
+                custom_item_name,
                 products (
                     name
                 )
@@ -648,7 +648,7 @@ const getReceiptDetails = async (receiptId) => {
     if (receiptError) throw receiptError;
 
     const items = receipt.receipt_items.map(item => ({
-        name: item.products?.name || item.custom_item_name || 'Unknown Item',
+        name: item.products?.name || (item.custom_item_name || 'Unknown Item'),
         price: item.price,
         quantity: item.quantity,
         total: item.price * item.quantity

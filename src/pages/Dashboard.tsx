@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import Layout from "@/components/Layout";
-import { Doughnut, Chart, Eye, Users, Receipt, ShoppingBag, DollarSign, Wallet, ChevronUp, ChevronDown, TrendingUp } from "lucide-react";
+import { Eye, Users, Receipt, ShoppingBag, DollarSign, Wallet, ChevronUp, ChevronDown, TrendingUp, PieChart, BarChart } from "lucide-react";
 import { useDashboardData, TimeRange } from "@/hooks/useDashboardData";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StatCard } from "@/components/StatCard";
