@@ -119,24 +119,29 @@ const Receipts = () => {
     }
   };
 
-  const handleMontageStatusUpdate = async (receiptId, newStatus) => {
-    setIsLoading(true);
-    const { data, error } = await supabase
-      .from('receipts')
-      .update({ montage_status: newStatus })
-      .eq('id', receiptId)
-      .select()
-      .single();
+  const montageStatuses = ['UnOrdered', 'Ordered', 'Instore', 'InCutting', 'Ready'] as const;
+  
+  const handleMontageStatusUpdate = async (receiptId: string, currentStatus: string) => {
+    try {
+      setIsLoading(true);
+      const currentIndex = montageStatuses.indexOf(currentStatus as any);
+      const nextStatus = montageStatuses[(currentIndex + 1) % montageStatuses.length];
+      
+      const { error } = await supabase
+        .from('receipts')
+        .update({ montage_status: nextStatus })
+        .eq('id', receiptId);
 
-    setIsLoading(false);
-    if (error) {
-      console.error('Error updating montage status:', error);
-      toast.error('Failed to update montage status');
-      return;
+      if (error) throw error;
+      
+      await loadReceipts();
+      toast.success(`Status updated to ${nextStatus}`);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
+    } finally {
+      setIsLoading(false);
     }
-
-    loadReceipts();
-    toast.success(`Montage status updated to ${newStatus}`);
   };
 
 
@@ -322,14 +327,10 @@ const Receipts = () => {
                           variant="outline"
                           size="sm"
                           className={getMontageStatusColor(receipt.montageStatus)}
-                          onClick={() => {
-                            const statuses = ['UnOrdered', 'Ordered', 'Instore', 'InCutting', 'Ready'];
-                            const currentIndex = statuses.indexOf(receipt.montageStatus);
-                            const nextStatus = statuses[(currentIndex + 1) % statuses.length];
-                            handleMontageStatusUpdate(receipt.id, nextStatus);
-                          }}
+                          onClick={() => handleMontageStatusUpdate(receipt.id, receipt.montageStatus)}
+                          disabled={isLoading}
                         >
-                          {receipt.montageStatus}
+                          {receipt.montageStatus || 'UnOrdered'}
                         </Button>
                       </TableCell>
                       <TableCell className="text-right">
