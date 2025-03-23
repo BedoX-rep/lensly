@@ -106,6 +106,7 @@ export type Database = {
           balance: number
           client_id: string
           created_at: string
+          delivery_status: string
           discount_amount: number | null
           discount_percentage: number | null
           id: string
@@ -125,6 +126,7 @@ export type Database = {
           balance?: number
           client_id: string
           created_at?: string
+          delivery_status?: string
           discount_amount?: number | null
           discount_percentage?: number | null
           id?: string
@@ -144,6 +146,7 @@ export type Database = {
           balance?: number
           client_id?: string
           created_at?: string
+          delivery_status?: string
           discount_amount?: number | null
           discount_percentage?: number | null
           id?: string

@@ -1,3 +1,4 @@
+
 import { supabase } from "./client";
 import { toast } from "sonner";
 
@@ -224,6 +225,11 @@ export async function getClientReceipts(clientId: string) {
 }
 
 export async function createReceipt(receipt: any, items: any[]) {
+  // Ensure the timestamp includes a time component (13:00)
+  const dateWithTime = new Date(receipt.created_at);
+  dateWithTime.setHours(13, 0, 0, 0);
+  receipt.created_at = dateWithTime.toISOString();
+
   // Start a transaction
   const { data: receiptData, error: receiptError } = await supabase
     .from('receipts')
@@ -273,6 +279,61 @@ export async function updateReceipt(id: string, updatedFields: any) {
   }
 
   toast.success('Receipt updated successfully');
+  return data;
+}
+
+export async function updateReceiptPaymentStatus(id: string) {
+  // First get the receipt to determine the total
+  const { data: receipt, error: fetchError } = await supabase
+    .from('receipts')
+    .select('total')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching receipt for payment update:', fetchError);
+    toast.error('Failed to update payment status');
+    return null;
+  }
+
+  // Update the receipt to set advance_payment to total (making it fully paid)
+  const { data, error } = await supabase
+    .from('receipts')
+    .update({ 
+      advance_payment: receipt.total,
+      balance: 0 
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating payment status:', error);
+    toast.error('Failed to update payment status');
+    return null;
+  }
+
+  toast.success('Payment status updated to Paid');
+  return data;
+}
+
+export async function toggleDeliveryStatus(id: string, currentStatus: string) {
+  const newStatus = currentStatus === 'Delivered' ? 'Undelivered' : 'Delivered';
+  
+  const { data, error } = await supabase
+    .from('receipts')
+    .update({ delivery_status: newStatus })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating delivery status:', error);
+    toast.error('Failed to update delivery status');
+    return null;
+  }
+
+  toast.success(`Delivery status updated to ${newStatus}`);
   return data;
 }
 
@@ -337,4 +398,30 @@ export async function updateProductPosition(id: string, newPosition: number) {
     console.error('Error in updateProductPosition:', error);
     return false;
   }
+}
+
+// Format date with time in Casablanca timezone (UTC+1)
+export function formatDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  // Convert to Morocco/Casablanca time (UTC+1)
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Africa/Casablanca'
+  }).format(date);
+}
+
+// Format date only
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  // Convert to Morocco/Casablanca time (UTC+1)
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Africa/Casablanca'
+  }).format(date);
 }

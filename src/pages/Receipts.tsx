@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -10,9 +11,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Search, Eye, FileText, Printer, Download, Calendar, Trash2, Edit, AlertTriangle } from "lucide-react";
+import { Search, Eye, FileText, Printer, Download, Calendar, Trash2, Edit, AlertTriangle, Check, Truck } from "lucide-react";
 import { toast } from "sonner";
-import { getReceipts as fetchReceipts, deleteReceipt, updateReceipt } from "@/integrations/supabase/queries";
+import { 
+  getReceipts as fetchReceipts, 
+  deleteReceipt, 
+  updateReceipt, 
+  formatDateTime,
+  updateReceiptPaymentStatus,
+  toggleDeliveryStatus
+} from "@/integrations/supabase/queries";
 import { useForm } from "react-hook-form";
 
 const Receipts = () => {
@@ -93,6 +101,25 @@ const Receipts = () => {
     toast.info(`Downloading receipt #${receiptId}`);
   };
 
+  const handlePaymentStatusUpdate = async (receiptId) => {
+    setIsLoading(true);
+    const success = await updateReceiptPaymentStatus(receiptId);
+    setIsLoading(false);
+    if (success) {
+      loadReceipts();
+      toast.success("Payment status updated successfully");
+    }
+  };
+
+  const handleDeliveryStatusUpdate = async (receiptId, currentStatus) => {
+    setIsLoading(true);
+    const success = await toggleDeliveryStatus(receiptId, currentStatus);
+    setIsLoading(false);
+    if (success) {
+      loadReceipts();
+    }
+  };
+
   const confirmDelete = async () => {
     if (!selectedReceiptId) return;
     
@@ -141,6 +168,17 @@ const Receipts = () => {
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       case "Unpaid":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
+
+  const getDeliveryStatusColor = (status) => {
+    switch (status) {
+      case "Delivered":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "Undelivered":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
     }
@@ -203,7 +241,8 @@ const Receipts = () => {
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead>Advance Paid</TableHead>
                   <TableHead>Balance Due</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Payment Status</TableHead>
+                  <TableHead>Delivery Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -215,8 +254,8 @@ const Receipts = () => {
                       <TableCell>{receipt.clientName}</TableCell>
                       <TableCell>
                         <Input
-                          type="date"
-                          defaultValue={new Date(receipt.date).toISOString().split('T')[0]}
+                          type="datetime-local"
+                          defaultValue={new Date(receipt.date).toISOString().slice(0, 16)}
                           onBlur={async (e) => {
                             const success = await updateReceipt(receipt.id, { created_at: e.target.value });
                             if (success) {
@@ -235,6 +274,11 @@ const Receipts = () => {
                           {receipt.status}
                         </span>
                       </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getDeliveryStatusColor(receipt.deliveryStatus)}`}>
+                          {receipt.deliveryStatus}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button 
@@ -250,6 +294,26 @@ const Receipts = () => {
                             onClick={() => handleEditReceipt(receipt.id)}
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          {receipt.status !== "Paid" && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              className="text-green-600 hover:text-green-800" 
+                              onClick={() => handlePaymentStatusUpdate(receipt.id)}
+                              title="Mark as Paid"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className={receipt.deliveryStatus === "Delivered" ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"} 
+                            onClick={() => handleDeliveryStatusUpdate(receipt.id, receipt.deliveryStatus)}
+                            title={receipt.deliveryStatus === "Delivered" ? "Mark as Undelivered" : "Mark as Delivered"}
+                          >
+                            <Truck className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
@@ -279,7 +343,7 @@ const Receipts = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={9} className="h-24 text-center">
                       No receipts found.
                     </TableCell>
                   </TableRow>
@@ -307,6 +371,11 @@ const Receipts = () => {
                   <div className="text-right">
                     <h3 className="font-medium">Receipt Date</h3>
                     <p>{selectedReceipt.date}</p>
+                    <div className="mt-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${getDeliveryStatusColor(selectedReceipt.deliveryStatus)}`}>
+                        {selectedReceipt.deliveryStatus}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -413,6 +482,22 @@ const Receipts = () => {
                     className="gap-1"
                   >
                     <Edit className="h-4 w-4" /> Edit
+                  </Button>
+                  {selectedReceipt.status !== "Paid" && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handlePaymentStatusUpdate(selectedReceipt.id)} 
+                      className="gap-1 text-green-600"
+                    >
+                      <Check className="h-4 w-4" /> Mark as Paid
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleDeliveryStatusUpdate(selectedReceipt.id, selectedReceipt.deliveryStatus)} 
+                    className="gap-1 text-blue-600"
+                  >
+                    <Truck className="h-4 w-4" /> {selectedReceipt.deliveryStatus === "Delivered" ? "Mark as Undelivered" : "Mark as Delivered"}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -632,13 +717,11 @@ const getReceipts = async () => {
     total: receipt.total || 0,
     advancePayment: receipt.advance_payment || 0,
     balance: receipt.balance || 0,
+    deliveryStatus: receipt.delivery_status || 'Undelivered',
     status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
   }))
   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
-
-
-
 
 const getReceiptDetails = async (receiptId) => {
     const { data: receipt, error: receiptError } = await supabase
@@ -674,7 +757,8 @@ const getReceiptDetails = async (receiptId) => {
         id: receipt.id,
         clientName: receipt.clients.name,
         phone: receipt.clients.phone,
-        date: new Date(receipt.created_at).toLocaleDateString(),
+        date: formatDateTime(receipt.created_at),
+        deliveryStatus: receipt.delivery_status || 'Undelivered',
         prescription: {
             rightEye: { 
                 sph: receipt.right_eye_sph?.toString() || "0", 
@@ -694,6 +778,7 @@ const getReceiptDetails = async (receiptId) => {
         discount: receipt.discount_amount || 0,
         total: receipt.total,
         advancePayment: receipt.advance_payment || 0,
-        balance: receipt.balance
+        balance: receipt.balance,
+        status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
     };
 }
