@@ -121,15 +121,12 @@ const Receipts = () => {
 
   const montageStatuses = ['UnOrdered', 'Ordered', 'InStore', 'InCutting', 'Ready'] as const;
   
-  const handleMontageStatusUpdate = async (receiptId: string, currentStatus: string) => {
+  const handleMontageStatusUpdate = async (receiptId: string, newStatus: string) => {
     try {
       setIsLoading(true);
-      const currentIndex = montageStatuses.indexOf(currentStatus as any);
-      const nextStatus = montageStatuses[(currentIndex + 1) % montageStatuses.length];
-      
       const { error } = await supabase
         .from('receipts')
-        .update({ montage_status: nextStatus })
+        .update({ montage_status: newStatus })
         .eq('id', receiptId);
 
       if (error) throw error;
@@ -323,15 +320,21 @@ const Receipts = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={getMontageStatusColor(receipt.montageStatus)}
-                          onClick={() => handleMontageStatusUpdate(receipt.id, receipt.montageStatus)}
+                        <select
+                          className={`px-2 py-1 rounded border ${getMontageStatusColor(receipt.montageStatus)}`}
+                          value={receipt.montageStatus}
+                          onChange={(e) => {
+                            const newStatus = e.target.value;
+                            handleMontageStatusUpdate(receipt.id, newStatus);
+                          }}
                           disabled={isLoading}
                         >
-                          {receipt.montageStatus || 'UnOrdered'}
-                        </Button>
+                          {montageStatuses.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
