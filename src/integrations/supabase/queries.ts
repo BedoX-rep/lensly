@@ -1,4 +1,3 @@
-
 import { supabase } from "./client";
 import { toast } from "sonner";
 
@@ -225,10 +224,8 @@ export async function getClientReceipts(clientId: string) {
 }
 
 export async function createReceipt(receipt: any, items: any[]) {
-  // Ensure the timestamp includes a time component (13:00)
-  const dateWithTime = new Date(receipt.created_at);
-  dateWithTime.setHours(13, 0, 0, 0);
-  receipt.created_at = dateWithTime.toISOString();
+  // Make sure we're using the current timestamp
+  receipt.created_at = new Date().toISOString();
 
   // Start a transaction
   const { data: receiptData, error: receiptError } = await supabase

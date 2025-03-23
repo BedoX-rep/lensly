@@ -103,7 +103,7 @@ const NewReceipt: React.FC = () => {
   };
 
   const calculateTotal = () => {
-    return calculateSubtotal(); // For simplicity, total is same as subtotal
+    return calculateSubtotal();
   };
 
   const calculateBalance = () => {
@@ -111,15 +111,13 @@ const NewReceipt: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    // Basic validation
     if (items.length === 0) {
       toast.error('Please add at least one item to the receipt.');
       return;
     }
 
-    // Prepare receipt data
     const receiptData = {
-      client_id: 'e946a0ca-7f74-499f-a9a4-65f5f99169a3', // Replace with actual client ID selection
+      client_id: 'e946a0ca-7f74-499f-a9a4-65f5f99169a3',
       subtotal: calculateSubtotal(),
       total: calculateTotal(),
       advance_payment: advancePayment,
@@ -132,16 +130,15 @@ const NewReceipt: React.FC = () => {
       left_eye_axe: parseFloat(leftEyeAxe) || null,
       add_value: parseFloat(addValue) || null,
       tax: 0,
+      created_at: new Date().toISOString(),
     };
 
-    // Prepare items data
     const itemsData = items.map(item => ({
       product_id: item.productId,
       quantity: item.quantity,
       price: item.price,
     }));
 
-    // Log data for now
     console.log('Receipt Data:', receiptData);
     console.log('Items Data:', itemsData);
 
@@ -154,7 +151,6 @@ const NewReceipt: React.FC = () => {
       <div className="container mx-auto mt-8">
         <h1 className="text-2xl font-bold mb-4">Create New Receipt</h1>
 
-        {/* Product Selection */}
         <Card className="mb-4">
           <CardContent>
             <h2 className="text-lg font-semibold mb-2">Select Products</h2>
@@ -172,7 +168,6 @@ const NewReceipt: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* New Product Creation */}
         <Card className="mb-4">
           <CardContent>
             <h2 className="text-lg font-semibold mb-2">Create New Product</h2>
@@ -200,7 +195,6 @@ const NewReceipt: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Prescription Details */}
         <Card className="mb-4">
           <CardContent>
             <h2 className="text-lg font-semibold mb-2">Prescription Details</h2>
@@ -272,7 +266,6 @@ const NewReceipt: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Items Table */}
         <Card className="mb-4">
           <CardContent>
             <h2 className="text-lg font-semibold mb-2">Items</h2>
@@ -324,7 +317,6 @@ const NewReceipt: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Payment Details */}
         <Card className="mb-4">
           <CardContent>
             <h2 className="text-lg font-semibold mb-4">Payment Details</h2>
