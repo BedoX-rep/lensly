@@ -143,6 +143,7 @@ export type Database = {
           total?: number
         }
         Update: {
+          montage_status?: 'UnOrdered' | 'Ordered' | 'Instore' | 'InCutting' | 'Ready'
           add_value?: number | null
           advance_payment?: number | null
           balance?: number

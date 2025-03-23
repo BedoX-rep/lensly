@@ -299,14 +299,12 @@ const Receipts = () => {
                             setIsLoading(true);
                             
                             try {
-                              const { data, error } = await supabase
-                                .from('receipts')
-                                .update({ montage_status: newStatus })
-                                .eq('id', receipt.id)
-                                .select()
-                                .single();
+                              // Use the updateReceipt function from queries.ts
+                              const result = await updateReceipt(receipt.id, {
+                                montage_status: newStatus
+                              });
 
-                              if (error) throw error;
+                              if (!result) throw new Error('Failed to update receipt');
                               
                               // Update the local state immediately
                               setReceipts(receipts.map(r => 
