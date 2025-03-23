@@ -40,7 +40,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
         return;
       }
 
-      const groupedData = processDataByTimeRange(receipts, selectedTimeRange);
+      const groupedData = processDataByTimeRange(receipts || [], selectedTimeRange);
       setRevenueData(groupedData);
     } catch (error) {
       console.error("Error in fetchRevenueData:", error);
@@ -50,7 +50,10 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
   };
 
   const processDataByTimeRange = (receipts, timeRange: TimeRange) => {
-    if (!receipts || receipts.length === 0) return [];
+    if (!receipts || receipts.length === 0) {
+      // Return empty but properly structured data based on the time range
+      return getEmptyDataStructure(timeRange);
+    }
 
     const convertedReceipts = receipts.map(receipt => ({
       ...receipt,
@@ -82,8 +85,48 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     return groupedData;
   };
 
+  // Create empty data structures based on time range for when no data is available
+  const getEmptyDataStructure = (timeRange: TimeRange) => {
+    switch (timeRange) {
+      case "today":
+        return Array.from({ length: 24 }, (_, i) => ({
+          name: i,
+          revenue: 0,
+          count: 0
+        }));
+      case "week": {
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return Array.from({ length: 7 }, (_, i) => ({
+          name: i,
+          label: daysOfWeek[i],
+          revenue: 0,
+          count: 0
+        }));
+      }
+      case "month":
+        return Array.from({ length: 5 }, (_, i) => ({
+          name: i + 1,
+          label: `Week ${i + 1}`,
+          revenue: 0,
+          count: 0
+        }));
+      case "year":
+      case "all": {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return Array.from({ length: 12 }, (_, i) => ({
+          name: i + 1,
+          label: months[i],
+          revenue: 0,
+          count: 0
+        }));
+      }
+      default:
+        return [];
+    }
+  };
+
   const groupByHour = (receipts) => {
-    // Group by hour (24-hour breakdown)
+    // Initialize empty data structure for 24 hours
     const hourlyData = Array.from({ length: 24 }, (_, i) => ({
       name: i,
       revenue: 0,
@@ -110,7 +153,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
   };
 
   const groupByDayOfWeek = (receipts) => {
-    // Group by days (Monday through Sunday)
+    // Initialize empty data structure for days of week
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dailyData = Array.from({ length: 7 }, (_, i) => ({
       name: i,
@@ -142,7 +185,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
   };
 
   const groupByWeekOfMonth = (receipts) => {
-    // Group by weeks (Week 1, Week 2, etc.)
+    // Initialize empty data structure for weeks of month
     const weeklyData = Array.from({ length: 5 }, (_, i) => ({
       name: i + 1,
       label: `Week ${i + 1}`,
@@ -176,7 +219,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
   };
 
   const groupByMonth = (receipts) => {
-    // Group by months (January through December)
+    // Initialize empty data structure for months
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const monthlyData = Array.from({ length: 12 }, (_, i) => ({
       name: i + 1,

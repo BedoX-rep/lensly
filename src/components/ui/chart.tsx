@@ -16,6 +16,7 @@ import {
   Cell,
   AreaChart,
   Area,
+  ReferenceLine,
 } from "recharts";
 
 // Color palette
@@ -98,6 +99,14 @@ const Chart = ({
 
   // Use custom formatter if provided, otherwise use default
   const tickFormatter = formatXAxisTick || defaultFormatXAxisTick;
+  
+  // Check if all data points have 0 values for the yAxis
+  const allZeroValues = data.every(item => {
+    for (const key of yAxisArray) {
+      if (item[key] !== 0) return false;
+    }
+    return true;
+  });
 
   return (
     <div className={`chart-container ${className}`}>
@@ -119,6 +128,7 @@ const Chart = ({
               tickLine={false}
               axisLine={{ stroke: "#e2e8f0" }}
               tickFormatter={(value) => `${value}`}
+              domain={allZeroValues ? [0, 10] : ['auto', 'auto']}
             />
             {showTooltip && (customTooltip ? (
               <Tooltip content={customTooltip} />
@@ -142,6 +152,8 @@ const Chart = ({
                 activeDot={{ r: 8 }}
               />
             ))}
+            
+            {allZeroValues && <ReferenceLine y={0} stroke="#e2e8f0" strokeDasharray="3 3" />}
           </LineChart>
         ) : type === "bar" ? (
           <BarChart
@@ -159,6 +171,7 @@ const Chart = ({
               tickLine={false}
               axisLine={{ stroke: "#e2e8f0" }}
               tickFormatter={(value) => `${value}`}
+              domain={allZeroValues ? [0, 10] : ['auto', 'auto']}
             />
             {showTooltip && (customTooltip ? (
               <Tooltip content={customTooltip} />
@@ -181,6 +194,8 @@ const Chart = ({
                 stackId={stacked ? "stack" : undefined}
               />
             ))}
+            
+            {allZeroValues && <ReferenceLine y={0} stroke="#e2e8f0" strokeDasharray="3 3" />}
           </BarChart>
         ) : type === "pie" ? (
           <PieChart>
@@ -232,6 +247,7 @@ const Chart = ({
               tickLine={false}
               axisLine={{ stroke: "#e2e8f0" }}
               tickFormatter={(value) => `${value}`}
+              domain={allZeroValues ? [0, 10] : ['auto', 'auto']}
             />
             {showTooltip && (customTooltip ? (
               <Tooltip content={customTooltip} />
@@ -257,6 +273,8 @@ const Chart = ({
                 fillOpacity={0.3}
               />
             ))}
+            
+            {allZeroValues && <ReferenceLine y={0} stroke="#e2e8f0" strokeDasharray="3 3" />}
           </AreaChart>
         )}
       </ResponsiveContainer>
