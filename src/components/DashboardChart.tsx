@@ -1,39 +1,59 @@
-
 import React, { useState, useEffect } from "react";
-import Chart from "@/components/ui/chart";
-import { format, subDays, startOfDay, endOfDay, parseISO, isWithinInterval, startOfWeek, endOfWeek, getHours, getDay, getMonth, getDate } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Chart from "@/components/ui/chart";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { TimeRange } from "@/hooks/useDashboardData";
+import { format, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 
 interface DashboardChartProps {
-  data?: { month: string; revenue: number }[];
   title?: string;
   description?: string;
 }
 
-const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) => {
+const DashboardChart = ({ title, description }: DashboardChartProps) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("week");
   const [revenueData, setRevenueData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (data) {
-      setRevenueData(data);
-      setIsLoading(false);
-    } else {
-      fetchRevenueData();
-    }
-  }, [selectedTimeRange, data]);
+    fetchRevenueData();
+  }, [selectedTimeRange]);
 
   const fetchRevenueData = async () => {
     setIsLoading(true);
     try {
+      const now = new Date();
+      let start, end;
+
+      switch (selectedTimeRange) {
+        case 'day':
+          start = startOfDay(now);
+          end = endOfDay(now);
+          break;
+        case 'week':
+          start = startOfWeek(now);
+          end = endOfWeek(now);
+          break;
+        case 'month':
+          start = startOfMonth(now);
+          end = endOfMonth(now);
+          break;
+        case 'year':
+          start = startOfYear(now);
+          end = endOfYear(now);
+          break;
+        default:
+          start = startOfWeek(now);
+          end = endOfWeek(now);
+      }
+
       const { data: receipts, error } = await supabase
         .from("receipts")
         .select("*")
-        .order("created_at", { ascending: false });
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString())
+        .order("created_at", { ascending: true });
 
       if (error) {
         console.error("Error fetching receipts:", error);
@@ -49,226 +69,111 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     }
   };
 
-  const processDataByTimeRange = (receipts, timeRange: TimeRange) => {
+  const processDataByTimeRange = (receipts: any[], timeRange: TimeRange) => {
     if (!receipts || receipts.length === 0) {
-      // Return empty but properly structured data based on the time range
       return getEmptyDataStructure(timeRange);
     }
 
-    const convertedReceipts = receipts.map(receipt => ({
-      ...receipt,
-      created_at: receipt.created_at // The date is already in ISO format
-    }));
-
-    let groupedData = [];
-
     switch (timeRange) {
-      case "today":
-        groupedData = groupByHour(convertedReceipts);
-        break;
-      case "week":
-        groupedData = groupByDayOfWeek(convertedReceipts);
-        break;
-      case "month":
-        groupedData = groupByWeekOfMonth(convertedReceipts);
-        break;
-      case "year":
-        groupedData = groupByMonth(convertedReceipts);
-        break;
-      case "all":
-        groupedData = groupByMonth(convertedReceipts); // Default to monthly view for "all"
-        break;
+      case 'day':
+        return processHourlyData(receipts);
+      case 'week':
+        return processDailyData(receipts);
+      case 'month':
+        return processWeeklyData(receipts);
+      case 'year':
+        return processMonthlyData(receipts);
       default:
-        groupedData = groupByDayOfWeek(convertedReceipts);
-    }
-
-    return groupedData;
-  };
-
-  // Create empty data structures based on time range for when no data is available
-  const getEmptyDataStructure = (timeRange: TimeRange) => {
-    switch (timeRange) {
-      case "today":
-        return Array.from({ length: 24 }, (_, i) => ({
-          name: i,
-          revenue: 0,
-          count: 0
-        }));
-      case "week": {
-        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        return Array.from({ length: 7 }, (_, i) => ({
-          name: i,
-          label: daysOfWeek[i],
-          revenue: 0,
-          count: 0
-        }));
-      }
-      case "month":
-        return Array.from({ length: 5 }, (_, i) => ({
-          name: i + 1,
-          label: `Week ${i + 1}`,
-          revenue: 0,
-          count: 0
-        }));
-      case "year":
-      case "all": {
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return Array.from({ length: 12 }, (_, i) => ({
-          name: i + 1,
-          label: months[i],
-          revenue: 0,
-          count: 0
-        }));
-      }
-      default:
-        return [];
+        return processDailyData(receipts);
     }
   };
 
-  const groupByHour = (receipts) => {
-    // Initialize empty data structure for 24 hours
+  const processHourlyData = (receipts: any[]) => {
     const hourlyData = Array.from({ length: 24 }, (_, i) => ({
-      name: i,
-      revenue: 0,
-      count: 0
+      name: `${i}:00`,
+      revenue: 0
     }));
 
-    const today = startOfDay(new Date());
-    const todayReceipts = receipts.filter(receipt => {
-      const receiptDate = parseISO(receipt.created_at);
-      return isWithinInterval(receiptDate, {
-        start: today,
-        end: endOfDay(today)
-      });
-    });
-
-    todayReceipts.forEach(receipt => {
-      const receiptDate = parseISO(receipt.created_at);
-      const hour = getHours(receiptDate);
+    receipts.forEach(receipt => {
+      const date = parseISO(receipt.created_at);
+      const hour = date.getHours();
       hourlyData[hour].revenue += receipt.total || 0;
-      hourlyData[hour].count += 1;
     });
 
     return hourlyData;
   };
 
-  const groupByDayOfWeek = (receipts) => {
-    // Initialize empty data structure for days of week
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dailyData = Array.from({ length: 7 }, (_, i) => ({
-      name: i,
-      label: daysOfWeek[i],
-      revenue: 0,
-      count: 0
+  const processDailyData = (receipts: any[]) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dailyData = days.map(day => ({
+      name: day,
+      revenue: 0
     }));
 
-    const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // 0 = Sunday
-    const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
-    
-    const thisWeekReceipts = receipts.filter(receipt => {
-      const receiptDate = parseISO(receipt.created_at);
-      return isWithinInterval(receiptDate, {
-        start: weekStart,
-        end: weekEnd
-      });
-    });
-
-    thisWeekReceipts.forEach(receipt => {
-      const receiptDate = parseISO(receipt.created_at);
-      const day = getDay(receiptDate);
-      dailyData[day].revenue += receipt.total || 0;
-      dailyData[day].count += 1;
+    receipts.forEach(receipt => {
+      const date = parseISO(receipt.created_at);
+      const dayIndex = date.getDay();
+      dailyData[dayIndex].revenue += receipt.total || 0;
     });
 
     return dailyData;
   };
 
-  const groupByWeekOfMonth = (receipts) => {
-    // Initialize empty data structure for weeks of month
+  const processWeeklyData = (receipts: any[]) => {
     const weeklyData = Array.from({ length: 5 }, (_, i) => ({
-      name: i + 1,
-      label: `Week ${i + 1}`,
-      revenue: 0,
-      count: 0
+      name: `Week ${i + 1}`,
+      revenue: 0
     }));
 
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
-    const thisMonthReceipts = receipts.filter(receipt => {
-      const receiptDate = parseISO(receipt.created_at);
-      return isWithinInterval(receiptDate, {
-        start: monthStart,
-        end: monthEnd
-      });
-    });
-
-    thisMonthReceipts.forEach(receipt => {
-      const receiptDate = parseISO(receipt.created_at);
-      const dayOfMonth = getDate(receiptDate);
-      const weekNumber = Math.ceil(dayOfMonth / 7);
-      if (weekNumber >= 1 && weekNumber <= 5) {
-        weeklyData[weekNumber - 1].revenue += receipt.total || 0;
-        weeklyData[weekNumber - 1].count += 1;
+    receipts.forEach(receipt => {
+      const date = parseISO(receipt.created_at);
+      const weekNumber = Math.floor(date.getDate() / 7);
+      if (weekNumber < 5) {
+        weeklyData[weekNumber].revenue += receipt.total || 0;
       }
     });
 
     return weeklyData;
   };
 
-  const groupByMonth = (receipts) => {
-    // Initialize empty data structure for months
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    const monthlyData = Array.from({ length: 12 }, (_, i) => ({
-      name: i + 1,
-      label: months[i],
-      revenue: 0,
-      count: 0
+  const processMonthlyData = (receipts: any[]) => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthlyData = months.map(month => ({
+      name: month,
+      revenue: 0
     }));
 
-    const now = new Date();
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-    const yearEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-    
-    const thisYearReceipts = receipts.filter(receipt => {
-      const receiptDate = parseISO(receipt.created_at);
-      return isWithinInterval(receiptDate, {
-        start: yearStart,
-        end: yearEnd
-      });
-    });
-
-    thisYearReceipts.forEach(receipt => {
-      const receiptDate = parseISO(receipt.created_at);
-      const month = getMonth(receiptDate);
-      monthlyData[month].revenue += receipt.total || 0;
-      monthlyData[month].count += 1;
+    receipts.forEach(receipt => {
+      const date = parseISO(receipt.created_at);
+      const monthIndex = date.getMonth();
+      monthlyData[monthIndex].revenue += receipt.total || 0;
     });
 
     return monthlyData;
   };
 
-  // Format X-axis tick values based on time range
-  const formatXAxisTick = (value: any): string => {
-    if (value === undefined || value === null) return '';
-    
-    switch (selectedTimeRange) {
-      case 'today':
-        return `${value}:00`;
-      case 'week': {
-        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        return daysOfWeek[value] || value.toString();
-      }
+  const getEmptyDataStructure = (timeRange: TimeRange) => {
+    switch (timeRange) {
+      case 'day':
+        return Array.from({ length: 24 }, (_, i) => ({
+          name: `${i}:00`,
+          revenue: 0
+        }));
+      case 'week':
+        return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+          .map(day => ({ name: day, revenue: 0 }));
       case 'month':
-        return `Week ${value}`;
-      case 'year': {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return value >= 1 && value <= 12 ? months[value - 1] : value.toString();
-      }
+        return Array.from({ length: 5 }, (_, i) => ({
+          name: `Week ${i + 1}`,
+          revenue: 0
+        }));
+      case 'year':
+        return ['January', 'February', 'March', 'April', 'May', 'June', 
+                'July', 'August', 'September', 'October', 'November', 'December']
+          .map(month => ({ name: month, revenue: 0 }));
       default:
-        return value.toString();
+        return [];
     }
   };
 
@@ -297,7 +202,6 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
             height={300}
             colors={["#0369a1"]}
             showLegend={false}
-            formatXAxisTick={formatXAxisTick}
           />
         )}
       </CardContent>
