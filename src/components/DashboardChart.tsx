@@ -10,14 +10,25 @@ import { formatDateTime } from "@/integrations/supabase/queries";
 
 type TimeRange = "day" | "week" | "month" | "year";
 
-const DashboardChart = () => {
+interface DashboardChartProps {
+  data?: { month: string; revenue: number }[];
+  title?: string;
+  description?: string;
+}
+
+const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("week");
   const [revenueData, setRevenueData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchRevenueData();
-  }, [selectedTimeRange]);
+    if (data) {
+      setRevenueData(data);
+      setIsLoading(false);
+    } else {
+      fetchRevenueData();
+    }
+  }, [selectedTimeRange, data]);
 
   const fetchRevenueData = async () => {
     setIsLoading(true);
@@ -207,9 +218,9 @@ const DashboardChart = () => {
     <Card className="col-span-3 animate-fade-in">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium">Revenue Trend</CardTitle>
+          <CardTitle className="text-base font-medium">{title || "Revenue Trend"}</CardTitle>
           <TimeRangeSelector 
-            selectedRange={selectedTimeRange} 
+            value={selectedTimeRange} 
             onChange={(range) => setSelectedTimeRange(range as TimeRange)} 
           />
         </div>

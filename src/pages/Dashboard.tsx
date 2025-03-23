@@ -73,11 +73,13 @@ const Dashboard = () => {
         </div>
 
         <div className="grid gap-6">
-          <DashboardChart 
-            data={stats?.monthlyRevenue || []}
-            title="Revenue Trend"
-            description="Monthly revenue for the last 6 months"
-          />
+          {stats?.monthlyRevenue && (
+            <DashboardChart 
+              data={stats.monthlyRevenue}
+              title="Revenue Trend"
+              description="Monthly revenue for the last 6 months"
+            />
+          )}
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
