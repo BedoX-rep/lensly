@@ -5,7 +5,7 @@ import { Eye, Users, Receipt, ShoppingBag, DollarSign, Wallet, ChevronUp, Chevro
 import { useDashboardData, TimeRange } from "@/hooks/useDashboardData";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StatCard } from "@/components/StatCard";
-import { DashboardChart } from "@/components/DashboardChart";
+import DashboardChart from "@/components/DashboardChart";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";

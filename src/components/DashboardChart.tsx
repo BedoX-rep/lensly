@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from "react";
 import Chart from "@/components/ui/chart";
 import { format, subDays, startOfDay, endOfDay, parseISO, isWithinInterval, startOfWeek, endOfWeek, getHours, getDay, getMonth, getWeek } from "date-fns";
-import { zonedTimeToUtc } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import TimeRangeSelector from "./TimeRangeSelector";
+import { TimeRangeSelector } from "./TimeRangeSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDateTime } from "@/integrations/supabase/queries";
 
