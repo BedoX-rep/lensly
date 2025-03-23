@@ -295,26 +295,37 @@ const Receipts = () => {
                           className="w-full min-w-[150px] p-2 rounded border border-gray-200 dark:border-gray-700"
                           value={receipt.montageStatus || 'UnOrdered'}
                           onChange={async (e) => {
+                            const newStatus = e.target.value;
                             setIsLoading(true);
+                            
                             try {
-                              const newStatus = e.target.value as 'UnOrdered' | 'Ordered' | 'Instore' | 'InCutting' | 'Ready';
-                              const result = await updateReceipt(receipt.id, { 
-                                montage_status: newStatus 
-                              });
+                              const { data, error } = await supabase
+                                .from('receipts')
+                                .update({ montage_status: newStatus })
+                                .eq('id', receipt.id)
+                                .select()
+                                .single();
+
+                              if (error) throw error;
                               
-                              if (result) {
-                                await loadReceipts();
-                                toast.success(`Montage status updated to ${newStatus}`);
-                              } else {
-                                toast.error('Failed to update montage status');
-                                // Revert the select value to previous state
-                                e.target.value = receipt.montageStatus || 'UnOrdered';
-                              }
+                              // Update the local state immediately
+                              setReceipts(receipts.map(r => 
+                                r.id === receipt.id 
+                                  ? { ...r, montageStatus: newStatus }
+                                  : r
+                              ));
+                              
+                              toast.success(`Montage status updated to ${newStatus}`);
                             } catch (error) {
                               console.error('Error updating montage status:', error);
                               toast.error('Failed to update montage status');
-                              // Revert the select value to previous state
-                              e.target.value = receipt.montageStatus || 'UnOrdered';
+                              
+                              // Revert local state on error
+                              setReceipts(receipts.map(r => 
+                                r.id === receipt.id 
+                                  ? { ...r, montageStatus: receipt.montageStatus }
+                                  : r
+                              ));
                             } finally {
                               setIsLoading(false);
                             }
