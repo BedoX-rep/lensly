@@ -129,7 +129,12 @@ const Receipts = () => {
         .update({ montage_status: newStatus })
         .eq('id', receiptId);
 
-      if (error) throw error;
+      if (error) {
+        toast.error('Failed to update receipt');
+        throw error;
+      }
+      
+      toast.success('Receipt updated successfully');
       
       await loadReceipts();
       toast.success(`Status updated to ${nextStatus}`);
