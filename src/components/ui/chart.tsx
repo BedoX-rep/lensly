@@ -62,7 +62,7 @@ interface ChartProps {
   renderTooltip?: any;
   customTooltip?: any;
   onClick?: (data: any, index: number) => void;
-  timeUnit?: "day" | "week" | "month" | "year";
+  formatXAxisTick?: (value: any) => string;
 }
 
 const Chart = ({
@@ -86,33 +86,18 @@ const Chart = ({
   renderTooltip,
   customTooltip,
   onClick,
-  timeUnit = "day",
+  formatXAxisTick,
 }: ChartProps) => {
   const chartColors = customColors || colors.chart;
   const yAxisArray = Array.isArray(yAxis) ? yAxis : [yAxis];
 
-  const formatXAxisTick = (value: any) => {
-    if (!value) return '';
-    
-    // Handle different time units for the X-axis
-    if (timeUnit === 'day') {
-      // For day view, show hours
-      return `${value}:00`;
-    } else if (timeUnit === 'week') {
-      // For week view, show abbreviated day name
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      return days[value] || value;
-    } else if (timeUnit === 'month') {
-      // For month view, show week number
-      return `Week ${value}`;
-    } else if (timeUnit === 'year') {
-      // For year view, show month name
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return months[value - 1] || value;
-    }
-    
-    return value;
+  // Default formatter if none provided
+  const defaultFormatXAxisTick = (value: any) => {
+    return value !== undefined && value !== null ? value.toString() : '';
   };
+
+  // Use custom formatter if provided, otherwise use default
+  const tickFormatter = formatXAxisTick || defaultFormatXAxisTick;
 
   return (
     <div className={`chart-container ${className}`}>
@@ -126,7 +111,7 @@ const Chart = ({
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
             <XAxis 
               dataKey={xAxis} 
-              tickFormatter={formatXAxisTick} 
+              tickFormatter={tickFormatter}
               tickLine={false}
               axisLine={{ stroke: "#e2e8f0" }}
             />
@@ -166,7 +151,7 @@ const Chart = ({
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
             <XAxis 
               dataKey={xAxis} 
-              tickFormatter={formatXAxisTick} 
+              tickFormatter={tickFormatter}
               tickLine={false}
               axisLine={{ stroke: "#e2e8f0" }}
             />
@@ -178,7 +163,7 @@ const Chart = ({
             {showTooltip && (customTooltip ? (
               <Tooltip content={customTooltip} />
             ) : (
-              <Tooltip />
+              <Tooltip formatter={(value, name) => [value, name]} />
             ))}
             {!hideLegend && showLegend && (
               <Legend
@@ -239,7 +224,7 @@ const Chart = ({
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
             <XAxis 
               dataKey={xAxis} 
-              tickFormatter={formatXAxisTick} 
+              tickFormatter={tickFormatter}
               tickLine={false}
               axisLine={{ stroke: "#e2e8f0" }}
             />

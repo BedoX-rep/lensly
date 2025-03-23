@@ -100,7 +100,8 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     });
 
     todayReceipts.forEach(receipt => {
-      const hour = getHours(parseISO(receipt.created_at));
+      const receiptDate = parseISO(receipt.created_at);
+      const hour = getHours(receiptDate);
       hourlyData[hour].revenue += receipt.total || 0;
       hourlyData[hour].count += 1;
     });
@@ -119,8 +120,8 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     }));
 
     const now = new Date();
-    const weekStart = startOfWeek(now);
-    const weekEnd = endOfWeek(now);
+    const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // 0 = Sunday
+    const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
     
     const thisWeekReceipts = receipts.filter(receipt => {
       const receiptDate = parseISO(receipt.created_at);
@@ -131,7 +132,8 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     });
 
     thisWeekReceipts.forEach(receipt => {
-      const day = getDay(parseISO(receipt.created_at));
+      const receiptDate = parseISO(receipt.created_at);
+      const day = getDay(receiptDate);
       dailyData[day].revenue += receipt.total || 0;
       dailyData[day].count += 1;
     });
@@ -196,7 +198,8 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     });
 
     thisYearReceipts.forEach(receipt => {
-      const month = getMonth(parseISO(receipt.created_at));
+      const receiptDate = parseISO(receipt.created_at);
+      const month = getMonth(receiptDate);
       monthlyData[month].revenue += receipt.total || 0;
       monthlyData[month].count += 1;
     });
@@ -204,21 +207,25 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     return monthlyData;
   };
 
-  // Convert selectedTimeRange to the format expected by the Chart component
-  const getChartTimeUnit = (): "day" | "week" | "month" | "year" => {
+  // Format X-axis tick values based on time range
+  const formatXAxisTick = (value: any): string => {
+    if (value === undefined || value === null) return '';
+    
     switch (selectedTimeRange) {
-      case "today":
-        return "day";
-      case "week":
-        return "week";
-      case "month":
-        return "month";
-      case "year":
-        return "year";
-      case "all":
-        return "year"; // Default to year view for "all"
+      case 'today':
+        return `${value}:00`;
+      case 'week': {
+        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        return daysOfWeek[value] || value.toString();
+      }
+      case 'month':
+        return `Week ${value}`;
+      case 'year': {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return value >= 1 && value <= 12 ? months[value - 1] : value.toString();
+      }
       default:
-        return "week";
+        return value.toString();
     }
   };
 
@@ -247,7 +254,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
             height={300}
             colors={["#0369a1"]}
             showLegend={false}
-            timeUnit={getChartTimeUnit()}
+            formatXAxisTick={formatXAxisTick}
           />
         )}
       </CardContent>
