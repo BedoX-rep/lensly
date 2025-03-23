@@ -292,11 +292,21 @@ const Receipts = () => {
                       </TableCell>
                       <TableCell>
                         <select
-                          className="w-full p-2 rounded border border-gray-200 dark:border-gray-700"
+                          className="w-full min-w-[150px] p-2 rounded border border-gray-200 dark:border-gray-700"
                           value={receipt.montageStatus || 'UnOrdered'}
-                          onChange={(e) => handleMontageStatusUpdate(receipt.id, e.target.value)}
+                          onChange={async (e) => {
+                            const success = await updateReceipt(receipt.id, { montage_status: e.target.value });
+                            if (success) {
+                              loadReceipts();
+                              toast.success('Montage status updated successfully');
+                            }
+                          }}
                         >
                           <option value="UnOrdered">UnOrdered</option>
+                          <option value="Ordered">Ordered</option>
+                          <option value="Instore">Instore</option>
+                          <option value="InCutting">InCutting</option>
+                          <option value="Ready">Ready</option>
                           <option value="Ordered">Ordered</option>
                           <option value="Instore">Instore</option>
                           <option value="InCutting">InCutting</option>
