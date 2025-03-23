@@ -130,14 +130,13 @@ const Receipts = () => {
         .eq('id', receiptId);
 
       if (error) {
-        toast.error('Failed to update receipt');
-        throw error;
+        console.error('Error updating status:', error);
+        toast.error('Failed to update status');
+        return;
       }
       
-      toast.success('Receipt updated successfully');
-      
+      toast.success(`Status updated to ${newStatus}`);
       await loadReceipts();
-      toast.success(`Status updated to ${nextStatus}`);
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Failed to update status');
