@@ -295,10 +295,14 @@ const Receipts = () => {
                           className="w-full min-w-[150px] p-2 rounded border border-gray-200 dark:border-gray-700"
                           value={receipt.montageStatus || 'UnOrdered'}
                           onChange={async (e) => {
-                            const success = await updateReceipt(receipt.id, { montage_status: e.target.value });
-                            if (success) {
-                              loadReceipts();
-                              toast.success('Montage status updated successfully');
+                            try {
+                              const result = await updateReceipt(receipt.id, { montage_status: e.target.value });
+                              if (result) {
+                                await loadReceipts();
+                              }
+                            } catch (error) {
+                              console.error('Error updating montage status:', error);
+                              toast.error('Failed to update montage status');
                             }
                           }}
                         >

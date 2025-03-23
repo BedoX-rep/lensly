@@ -126,7 +126,7 @@ export type Database = {
           advance_payment?: number | null
           balance?: number
           client_id: string
-          montage_status?: string
+          montage_status?: 'UnOrdered' | 'Ordered' | 'Instore' | 'InCutting' | 'Ready'
           created_at?: string
           delivery_status?: string
           discount_amount?: number | null
