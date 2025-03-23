@@ -295,38 +295,15 @@ const Receipts = () => {
                           className="w-full min-w-[150px] p-2 rounded border border-gray-200 dark:border-gray-700"
                           value={receipt.montageStatus || 'UnOrdered'}
                           onChange={async (e) => {
-                            const newStatus = e.target.value;
                             setIsLoading(true);
+                            const newStatus = e.target.value;
+                            const result = await updateMontageStatus(receipt.id, newStatus);
                             
-                            try {
-                              // Use the updateReceipt function from queries.ts
-                              const result = await updateReceipt(receipt.id, {
-                                montage_status: newStatus
-                              });
-
-                              if (!result) throw new Error('Failed to update receipt');
-                              
-                              // Update the local state immediately
-                              setReceipts(receipts.map(r => 
-                                r.id === receipt.id 
-                                  ? { ...r, montageStatus: newStatus }
-                                  : r
-                              ));
-                              
-                              toast.success(`Montage status updated to ${newStatus}`);
-                            } catch (error) {
-                              console.error('Error updating montage status:', error);
-                              toast.error('Failed to update montage status');
-                              
-                              // Revert local state on error
-                              setReceipts(receipts.map(r => 
-                                r.id === receipt.id 
-                                  ? { ...r, montageStatus: receipt.montageStatus }
-                                  : r
-                              ));
-                            } finally {
-                              setIsLoading(false);
+                            if (result) {
+                              await loadReceipts();
                             }
+                            
+                            setIsLoading(false);
                           }}
                         >
                           <option value="UnOrdered">UnOrdered</option>
