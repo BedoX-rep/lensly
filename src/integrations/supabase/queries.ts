@@ -37,6 +37,20 @@ export async function addProduct(name: string, price: number) {
 export async function updateProduct(id: string, name: string, price: number) {
   const { data, error } = await supabase
     .from('products')
+    .update({ name, price })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating product:', error);
+    toast.error('Failed to update product');
+    return null;
+  }
+
+  toast.success(`Product ${name} updated successfully`);
+  return data;
+}
 
 export async function updateMontageStatus(id: string, newStatus: string) {
   const { data, error } = await supabase
@@ -55,10 +69,6 @@ export async function updateMontageStatus(id: string, newStatus: string) {
   toast.success(`Montage status updated to ${newStatus}`);
   return data;
 }
-
-    .update({ name, price })
-    .eq('id', id)
-    .select()
     .single();
 
   if (error) {
