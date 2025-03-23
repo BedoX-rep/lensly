@@ -154,6 +154,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     });
 
     thisMonthReceipts.forEach(receipt => {
+      const receiptDate = parseISO(receipt.created_at);
       const dayOfMonth = receiptDate.getDate();
       const weekNumber = Math.ceil(dayOfMonth / 7);
       if (weekNumber >= 1 && weekNumber <= 5) {
