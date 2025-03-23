@@ -143,6 +143,7 @@ export type Database = {
           total?: number
         }
         Update: {
+          montage_status?: string
           add_value?: number | null
           advance_payment?: number | null
           balance?: number

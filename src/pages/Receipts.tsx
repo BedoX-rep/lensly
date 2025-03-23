@@ -121,12 +121,22 @@ const Receipts = () => {
 
   const handleMontageStatusUpdate = async (receiptId, newStatus) => {
     setIsLoading(true);
-    const success = await updateReceipt(receiptId, { montage_status: newStatus });
+    const { data, error } = await supabase
+      .from('receipts')
+      .update({ montage_status: newStatus })
+      .eq('id', receiptId)
+      .select()
+      .single();
+      
     setIsLoading(false);
-    if (success) {
-      loadReceipts();
-      toast.success("Montage status updated successfully");
+    if (error) {
+      console.error('Error updating montage status:', error);
+      toast.error('Failed to update montage status');
+      return;
     }
+    
+    loadReceipts();
+    toast.success(`Montage status updated to ${newStatus}`);
   };
 
 
