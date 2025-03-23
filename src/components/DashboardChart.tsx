@@ -1,11 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import Chart from "@/components/ui/chart";
-import { format, subDays, startOfDay, endOfDay, parseISO, isWithinInterval, startOfWeek, endOfWeek, getHours, getDay, getMonth, getWeek } from "date-fns";
-import { toZonedTime } from 'date-fns-tz';
+import { format, subDays, startOfDay, endOfDay, parseISO, isWithinInterval, startOfWeek, endOfWeek, getHours, getDay, getMonth, getDate } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimeRangeSelector } from "@/components/TimeRangeSelector";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDateTime } from "@/integrations/supabase/queries";
 import { TimeRange } from "@/hooks/useDashboardData";
 
 interface DashboardChartProps {
@@ -15,7 +14,7 @@ interface DashboardChartProps {
 }
 
 const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState<"day" | "week" | "month" | "year">("week");
+  const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("week");
   const [revenueData, setRevenueData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,8 +40,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
         return;
       }
 
-      const timeZone = 'Africa/Casablanca'; // Morocco timezone
-      const groupedData = processDataByTimeRange(receipts, selectedTimeRange, timeZone);
+      const groupedData = processDataByTimeRange(receipts, selectedTimeRange);
       setRevenueData(groupedData);
     } catch (error) {
       console.error("Error in fetchRevenueData:", error);
@@ -51,7 +49,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     }
   };
 
-  const processDataByTimeRange = (receipts, timeRange: "day" | "week" | "month" | "year", timezone) => {
+  const processDataByTimeRange = (receipts, timeRange: TimeRange) => {
     if (!receipts || receipts.length === 0) return [];
 
     const convertedReceipts = receipts.map(receipt => ({
@@ -62,7 +60,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     let groupedData = [];
 
     switch (timeRange) {
-      case "day":
+      case "today":
         groupedData = groupByHour(convertedReceipts);
         break;
       case "week":
@@ -74,6 +72,9 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
       case "year":
         groupedData = groupByMonth(convertedReceipts);
         break;
+      case "all":
+        groupedData = groupByMonth(convertedReceipts); // Default to monthly view for "all"
+        break;
       default:
         groupedData = groupByDayOfWeek(convertedReceipts);
     }
@@ -82,6 +83,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
   };
 
   const groupByHour = (receipts) => {
+    // Group by hour (24-hour breakdown)
     const hourlyData = Array.from({ length: 24 }, (_, i) => ({
       name: i,
       revenue: 0,
@@ -107,8 +109,11 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
   };
 
   const groupByDayOfWeek = (receipts) => {
+    // Group by days (Monday through Sunday)
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dailyData = Array.from({ length: 7 }, (_, i) => ({
       name: i,
+      label: daysOfWeek[i],
       revenue: 0,
       count: 0
     }));
@@ -135,8 +140,10 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
   };
 
   const groupByWeekOfMonth = (receipts) => {
+    // Group by weeks (Week 1, Week 2, etc.)
     const weeklyData = Array.from({ length: 5 }, (_, i) => ({
       name: i + 1,
+      label: `Week ${i + 1}`,
       revenue: 0,
       count: 0
     }));
@@ -155,7 +162,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
 
     thisMonthReceipts.forEach(receipt => {
       const receiptDate = parseISO(receipt.created_at);
-      const dayOfMonth = receiptDate.getDate();
+      const dayOfMonth = getDate(receiptDate);
       const weekNumber = Math.ceil(dayOfMonth / 7);
       if (weekNumber >= 1 && weekNumber <= 5) {
         weeklyData[weekNumber - 1].revenue += receipt.total || 0;
@@ -167,8 +174,11 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
   };
 
   const groupByMonth = (receipts) => {
+    // Group by months (January through December)
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const monthlyData = Array.from({ length: 12 }, (_, i) => ({
       name: i + 1,
+      label: months[i],
       revenue: 0,
       count: 0
     }));
@@ -194,14 +204,32 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
     return monthlyData;
   };
 
+  // Convert selectedTimeRange to the format expected by the Chart component
+  const getChartTimeUnit = (): "day" | "week" | "month" | "year" => {
+    switch (selectedTimeRange) {
+      case "today":
+        return "day";
+      case "week":
+        return "week";
+      case "month":
+        return "month";
+      case "year":
+        return "year";
+      case "all":
+        return "year"; // Default to year view for "all"
+      default:
+        return "week";
+    }
+  };
+
   return (
     <Card className="col-span-3 animate-fade-in">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">{title || "Revenue Trend"}</CardTitle>
           <TimeRangeSelector 
-            value={selectedTimeRange as TimeRange} 
-            onChange={(range) => setSelectedTimeRange(range as "day" | "week" | "month" | "year")} 
+            value={selectedTimeRange} 
+            onChange={(range) => setSelectedTimeRange(range)} 
           />
         </div>
       </CardHeader>
@@ -219,7 +247,7 @@ const DashboardChart = ({ data, title, description }: DashboardChartProps = {}) 
             height={300}
             colors={["#0369a1"]}
             showLegend={false}
-            timeUnit={selectedTimeRange}
+            timeUnit={getChartTimeUnit()}
           />
         )}
       </CardContent>
