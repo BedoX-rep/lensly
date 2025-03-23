@@ -295,14 +295,28 @@ const Receipts = () => {
                           className="w-full min-w-[150px] p-2 rounded border border-gray-200 dark:border-gray-700"
                           value={receipt.montageStatus || 'UnOrdered'}
                           onChange={async (e) => {
+                            setIsLoading(true);
                             try {
-                              const result = await updateReceipt(receipt.id, { montage_status: e.target.value });
+                              const newStatus = e.target.value as 'UnOrdered' | 'Ordered' | 'Instore' | 'InCutting' | 'Ready';
+                              const result = await updateReceipt(receipt.id, { 
+                                montage_status: newStatus 
+                              });
+                              
                               if (result) {
                                 await loadReceipts();
+                                toast.success(`Montage status updated to ${newStatus}`);
+                              } else {
+                                toast.error('Failed to update montage status');
+                                // Revert the select value to previous state
+                                e.target.value = receipt.montageStatus || 'UnOrdered';
                               }
                             } catch (error) {
                               console.error('Error updating montage status:', error);
                               toast.error('Failed to update montage status');
+                              // Revert the select value to previous state
+                              e.target.value = receipt.montageStatus || 'UnOrdered';
+                            } finally {
+                              setIsLoading(false);
                             }
                           }}
                         >
