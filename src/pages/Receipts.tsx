@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -13,10 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Search, Eye, FileText, Printer, Download, Calendar, Trash2, Edit, AlertTriangle, Check, Truck } from "lucide-react";
 import { toast } from "sonner";
-import { 
-  getReceipts as fetchReceipts, 
-  deleteReceipt, 
-  updateReceipt, 
+import {
+  getReceipts as fetchReceipts,
+  deleteReceipt,
+  updateReceipt,
   formatDateTime,
   updateReceiptPaymentStatus,
   toggleDeliveryStatus
@@ -72,7 +71,7 @@ const Receipts = () => {
     setReceipts(receiptsData);
   };
 
-  const filteredReceipts = receipts.filter(receipt => 
+  const filteredReceipts = receipts.filter(receipt =>
     receipt.clientName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -120,13 +119,24 @@ const Receipts = () => {
     }
   };
 
+  const handleMontageStatusUpdate = async (receiptId, newStatus) => {
+    setIsLoading(true);
+    const success = await updateReceipt(receiptId, { montage_status: newStatus });
+    setIsLoading(false);
+    if (success) {
+      loadReceipts();
+      toast.success("Montage status updated successfully");
+    }
+  };
+
+
   const confirmDelete = async () => {
     if (!selectedReceiptId) return;
-    
+
     setIsLoading(true);
     const success = await deleteReceipt(selectedReceiptId);
     setIsLoading(false);
-    
+
     if (success) {
       loadReceipts();
       setIsDeleteDialogOpen(false);
@@ -136,9 +146,9 @@ const Receipts = () => {
 
   const onSubmitEdit = async (data) => {
     if (!selectedReceipt) return;
-    
+
     setIsLoading(true);
-    
+
     const updatedFields = {
       advance_payment: Number(data.advancePayment),
       right_eye_sph: data.rightEyeSph ? Number(data.rightEyeSph) : null,
@@ -150,10 +160,10 @@ const Receipts = () => {
       add_value: data.addValue ? Number(data.addValue) : null,
       balance: selectedReceipt.total - Number(data.advancePayment)
     };
-    
+
     const result = await updateReceipt(selectedReceipt.id, updatedFields);
     setIsLoading(false);
-    
+
     if (result) {
       loadReceipts();
       setIsEditDialogOpen(false);
@@ -243,6 +253,7 @@ const Receipts = () => {
                   <TableHead>Balance Due</TableHead>
                   <TableHead>Payment Status</TableHead>
                   <TableHead>Delivery Status</TableHead>
+                  <TableHead>Montage Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -250,7 +261,7 @@ const Receipts = () => {
                 {filteredReceipts.length > 0 ? (
                   filteredReceipts.map((receipt) => (
                     <TableRow key={receipt.id}>
-                      <TableCell className="font-medium">#{receipt.id.substring(0,8)}</TableCell>
+                      <TableCell className="font-medium">#{receipt.id.substring(0, 8)}</TableCell>
                       <TableCell>{receipt.clientName}</TableCell>
                       <TableCell>
                         <Input
@@ -279,60 +290,73 @@ const Receipts = () => {
                           {receipt.deliveryStatus}
                         </span>
                       </TableCell>
+                      <TableCell>
+                        <select
+                          className="w-full p-2 rounded border border-gray-200 dark:border-gray-700"
+                          value={receipt.montageStatus || 'UnOrdered'}
+                          onChange={(e) => handleMontageStatusUpdate(receipt.id, e.target.value)}
+                        >
+                          <option value="UnOrdered">UnOrdered</option>
+                          <option value="Ordered">Ordered</option>
+                          <option value="Instore">Instore</option>
+                          <option value="InCutting">InCutting</option>
+                          <option value="Ready">Ready</option>
+                        </select>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleViewReceipt(receipt.id)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleEditReceipt(receipt.id)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           {receipt.status !== "Paid" && (
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
-                              className="text-green-600 hover:text-green-800" 
+                              className="text-green-600 hover:text-green-800"
                               onClick={() => handlePaymentStatusUpdate(receipt.id)}
                               title="Mark as Paid"
                             >
                               <Check className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
-                            className={receipt.deliveryStatus === "Delivered" ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"} 
+                            className={receipt.deliveryStatus === "Delivered" ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
                             onClick={() => handleDeliveryStatusUpdate(receipt.id, receipt.deliveryStatus)}
                             title={receipt.deliveryStatus === "Delivered" ? "Mark as Undelivered" : "Mark as Delivered"}
                           >
                             <Truck className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
-                            className="text-destructive hover:text-destructive/80" 
+                            className="text-destructive hover:text-destructive/80"
                             onClick={() => handleDeleteReceipt(receipt.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handlePrintReceipt(receipt.id)}
                           >
                             <Printer className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleDownloadReceipt(receipt.id)}
                           >
                             <Download className="h-4 w-4" />
@@ -343,7 +367,7 @@ const Receipts = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center">
+                    <TableCell colSpan={10} className="h-24 text-center">
                       No receipts found.
                     </TableCell>
                   </TableRow>
@@ -357,7 +381,7 @@ const Receipts = () => {
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>Receipt #{selectedReceipt ? selectedReceipt.id.substring(0,8) : ''}</DialogTitle>
+              <DialogTitle>Receipt #{selectedReceipt ? selectedReceipt.id.substring(0, 8) : ''}</DialogTitle>
             </DialogHeader>
 
             {selectedReceipt && (
@@ -476,39 +500,39 @@ const Receipts = () => {
                 </div>
 
                 <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleEditReceipt(selectedReceipt.id)} 
+                  <Button
+                    variant="outline"
+                    onClick={() => handleEditReceipt(selectedReceipt.id)}
                     className="gap-1"
                   >
                     <Edit className="h-4 w-4" /> Edit
                   </Button>
                   {selectedReceipt.status !== "Paid" && (
-                    <Button 
-                      variant="outline" 
-                      onClick={() => handlePaymentStatusUpdate(selectedReceipt.id)} 
+                    <Button
+                      variant="outline"
+                      onClick={() => handlePaymentStatusUpdate(selectedReceipt.id)}
                       className="gap-1 text-green-600"
                     >
                       <Check className="h-4 w-4" /> Mark as Paid
                     </Button>
                   )}
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleDeliveryStatusUpdate(selectedReceipt.id, selectedReceipt.deliveryStatus)} 
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDeliveryStatusUpdate(selectedReceipt.id, selectedReceipt.deliveryStatus)}
                     className="gap-1 text-blue-600"
                   >
                     <Truck className="h-4 w-4" /> {selectedReceipt.deliveryStatus === "Delivered" ? "Mark as Undelivered" : "Mark as Delivered"}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handlePrintReceipt(selectedReceipt.id)} 
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePrintReceipt(selectedReceipt.id)}
                     className="gap-1"
                   >
                     <Printer className="h-4 w-4" /> Print
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleDownloadReceipt(selectedReceipt.id)} 
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownloadReceipt(selectedReceipt.id)}
                     className="gap-1"
                   >
                     <Download className="h-4 w-4" /> Download PDF
@@ -557,7 +581,7 @@ const Receipts = () => {
                       )}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={editForm.control}
@@ -586,7 +610,7 @@ const Receipts = () => {
                       )}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={editForm.control}
@@ -615,7 +639,7 @@ const Receipts = () => {
                       )}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={editForm.control}
@@ -637,12 +661,12 @@ const Receipts = () => {
                         <FormItem>
                           <FormLabel>Advance Payment</FormLabel>
                           <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              min="0" 
-                              max={selectedReceipt.total} 
-                              step="0.01" 
+                            <Input
+                              {...field}
+                              type="number"
+                              min="0"
+                              max={selectedReceipt.total}
+                              step="0.01"
                             />
                           </FormControl>
                           <FormMessage />
@@ -650,11 +674,11 @@ const Receipts = () => {
                       )}
                     />
                   </div>
-                  
+
                   <DialogFooter>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={() => setIsEditDialogOpen(false)}
                     >
                       Cancel
@@ -677,21 +701,21 @@ const Receipts = () => {
                 <AlertTriangle className="h-5 w-5" /> Delete Receipt
               </DialogTitle>
             </DialogHeader>
-            
+
             <div className="py-4">
               <p>Are you sure you want to delete this receipt? This action cannot be undone.</p>
             </div>
-            
+
             <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setIsDeleteDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 variant="destructive"
                 onClick={confirmDelete}
                 disabled={isLoading}
@@ -718,15 +742,16 @@ const getReceipts = async () => {
     advancePayment: receipt.advance_payment || 0,
     balance: receipt.balance || 0,
     deliveryStatus: receipt.delivery_status || 'Undelivered',
-    status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
+    status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid",
+    montageStatus: receipt.montage_status || "UnOrdered"
   }))
-  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
 const getReceiptDetails = async (receiptId) => {
-    const { data: receipt, error: receiptError } = await supabase
-        .from('receipts')
-        .select(`
+  const { data: receipt, error: receiptError } = await supabase
+    .from('receipts')
+    .select(`
             *,
             clients (
                 name,
@@ -741,44 +766,45 @@ const getReceiptDetails = async (receiptId) => {
                 )
             )
         `)
-        .eq('id', receiptId)
-        .single();
+    .eq('id', receiptId)
+    .single();
 
-    if (receiptError) throw receiptError;
+  if (receiptError) throw receiptError;
 
-    const items = receipt.receipt_items.map(item => ({
-        name: item.products?.name || (item.custom_item_name || 'Unknown Item'),
-        price: item.price,
-        quantity: item.quantity,
-        total: item.price * item.quantity
-    }));
+  const items = receipt.receipt_items.map(item => ({
+    name: item.products?.name || (item.custom_item_name || 'Unknown Item'),
+    price: item.price,
+    quantity: item.quantity,
+    total: item.price * item.quantity
+  }));
 
-    return {
-        id: receipt.id,
-        clientName: receipt.clients.name,
-        phone: receipt.clients.phone,
-        date: formatDateTime(receipt.created_at),
-        deliveryStatus: receipt.delivery_status || 'Undelivered',
-        prescription: {
-            rightEye: { 
-                sph: receipt.right_eye_sph?.toString() || "0", 
-                cyl: receipt.right_eye_cyl?.toString() || "0", 
-                axe: receipt.right_eye_axe?.toString() || "0" 
-            },
-            leftEye: { 
-                sph: receipt.left_eye_sph?.toString() || "0", 
-                cyl: receipt.left_eye_cyl?.toString() || "0", 
-                axe: receipt.left_eye_axe?.toString() || "0" 
-            },
-            add: receipt.add_value?.toString() || "0"
-        },
-        items,
-        subtotal: receipt.subtotal,
-        tax: receipt.tax,
-        discount: receipt.discount_amount || 0,
-        total: receipt.total,
-        advancePayment: receipt.advance_payment || 0,
-        balance: receipt.balance,
-        status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid"
-    };
+  return {
+    id: receipt.id,
+    clientName: receipt.clients.name,
+    phone: receipt.clients.phone,
+    date: formatDateTime(receipt.created_at),
+    deliveryStatus: receipt.delivery_status || 'Undelivered',
+    prescription: {
+      rightEye: {
+        sph: receipt.right_eye_sph?.toString() || "0",
+        cyl: receipt.right_eye_cyl?.toString() || "0",
+        axe: receipt.right_eye_axe?.toString() || "0"
+      },
+      leftEye: {
+        sph: receipt.left_eye_sph?.toString() || "0",
+        cyl: receipt.left_eye_cyl?.toString() || "0",
+        axe: receipt.left_eye_axe?.toString() || "0"
+      },
+      add: receipt.add_value?.toString() || "0"
+    },
+    items,
+    subtotal: receipt.subtotal,
+    tax: receipt.tax,
+    discount: receipt.discount_amount || 0,
+    total: receipt.total,
+    advancePayment: receipt.advance_payment || 0,
+    balance: receipt.balance,
+    status: receipt.balance === 0 ? "Paid" : receipt.advance_payment > 0 ? "Partially Paid" : "Unpaid",
+    montageStatus: receipt.montage_status || "UnOrdered"
+  };
 }

@@ -119,12 +119,14 @@ export type Database = {
           subtotal: number
           tax: number
           total: number
+          montage_status: string
         }
         Insert: {
           add_value?: number | null
           advance_payment?: number | null
           balance?: number
           client_id: string
+          montage_status?: string
           created_at?: string
           delivery_status?: string
           discount_amount?: number | null
