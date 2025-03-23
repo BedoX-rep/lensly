@@ -52,35 +52,6 @@ export async function updateProduct(id: string, name: string, price: number) {
   return data;
 }
 
-export async function updateMontageStatus(id: string, newStatus: string) {
-  const { data, error } = await supabase
-    .from('receipts')
-    .update({ montage_status: newStatus })
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error updating montage status:', error);
-    toast.error('Failed to update montage status');
-    return null;
-  }
-
-  toast.success(`Montage status updated to ${newStatus}`);
-  return data;
-}
-    .single();
-
-  if (error) {
-    console.error('Error updating product:', error);
-    toast.error('Failed to update product');
-    return null;
-  }
-
-  toast.success(`Product ${name} updated successfully`);
-  return data;
-}
-
 export async function deleteProduct(id: string) {
   const { error } = await supabase
     .from('products')
