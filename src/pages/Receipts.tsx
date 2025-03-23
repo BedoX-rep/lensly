@@ -119,7 +119,7 @@ const Receipts = () => {
     }
   };
 
-  const montageStatuses = ['UnOrdered', 'Ordered', 'Instore', 'InCutting', 'Ready'] as const;
+  const montageStatuses = ['UnOrdered', 'Ordered', 'InStore', 'InCutting', 'Ready'] as const;
   
   const handleMontageStatusUpdate = async (receiptId: string, currentStatus: string) => {
     try {
