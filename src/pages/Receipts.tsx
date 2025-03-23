@@ -127,14 +127,14 @@ const Receipts = () => {
       .eq('id', receiptId)
       .select()
       .single();
-      
+
     setIsLoading(false);
     if (error) {
       console.error('Error updating montage status:', error);
       toast.error('Failed to update montage status');
       return;
     }
-    
+
     loadReceipts();
     toast.success(`Montage status updated to ${newStatus}`);
   };
@@ -201,6 +201,23 @@ const Receipts = () => {
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
+
+  const getMontageStatusColor = (status) => {
+    switch (status) {
+      case "UnOrdered":
+        return "bg-gray-300 text-gray-800";
+      case "Ordered":
+        return "bg-blue-300 text-blue-800";
+      case "Instore":
+        return "bg-yellow-300 text-yellow-800";
+      case "InCutting":
+        return "bg-green-300 text-green-800";
+      case "Ready":
+        return "bg-purple-300 text-purple-800";
+      default:
+        return "bg-gray-300 text-gray-800";
     }
   };
 
@@ -301,21 +318,19 @@ const Receipts = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <select
-                          className="w-full p-2 rounded border border-gray-200 dark:border-gray-700"
-                          value={receipt.montageStatus || 'UnOrdered'}
-                          onChange={(e) => handleMontageStatusUpdate(receipt.id, e.target.value)}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={getMontageStatusColor(receipt.montageStatus)}
+                          onClick={() => {
+                            const statuses = ['UnOrdered', 'Ordered', 'Instore', 'InCutting', 'Ready'];
+                            const currentIndex = statuses.indexOf(receipt.montageStatus);
+                            const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+                            handleMontageStatusUpdate(receipt.id, nextStatus);
+                          }}
                         >
-                          <option value="UnOrdered">UnOrdered</option>
-                          <option value="Ordered">Ordered</option>
-                          <option value="Instore">Instore</option>
-                          <option value="InCutting">InCutting</option>
-                          <option value="Ready">Ready</option>
-                          <option value="Ordered">Ordered</option>
-                          <option value="Instore">Instore</option>
-                          <option value="InCutting">InCutting</option>
-                          <option value="Ready">Ready</option>
-                        </select>
+                          {receipt.montageStatus}
+                        </Button>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
