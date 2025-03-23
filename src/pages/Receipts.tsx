@@ -311,6 +311,10 @@ const Receipts = () => {
                           <option value="Instore">Instore</option>
                           <option value="InCutting">InCutting</option>
                           <option value="Ready">Ready</option>
+                          <option value="Ordered">Ordered</option>
+                          <option value="Instore">Instore</option>
+                          <option value="InCutting">InCutting</option>
+                          <option value="Ready">Ready</option>
                         </select>
                       </TableCell>
                       <TableCell className="text-right">
