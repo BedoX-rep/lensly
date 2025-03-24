@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import Layout from "@/components/Layout";
 import { Eye, Users, Receipt, ShoppingBag, DollarSign, Wallet, ChevronUp, ChevronDown, TrendingUp, PieChart, BarChart } from "lucide-react";
@@ -73,13 +72,10 @@ const Dashboard = () => {
         </div>
 
         <div className="grid gap-6">
-          {stats?.monthlyRevenue && (
-            <DashboardChart 
-              data={stats.monthlyRevenue}
-              title="Revenue Trend"
-              description="Monthly revenue for the last 6 months"
-            />
-          )}
+          <DashboardChart 
+            title="Revenue Trend"
+            description={`Revenue data by ${timeRange === 'today' ? 'hour' : timeRange === 'month' ? 'date' : timeRange === 'week' ? 'day' : 'month'}`}
+          />
         </div>
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-3">

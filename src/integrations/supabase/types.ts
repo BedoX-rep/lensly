@@ -113,20 +113,19 @@ export type Database = {
           left_eye_axe: number | null
           left_eye_cyl: number | null
           left_eye_sph: number | null
+          montage_status: string
           right_eye_axe: number | null
           right_eye_cyl: number | null
           right_eye_sph: number | null
           subtotal: number
           tax: number
           total: number
-          montage_status: 'UnOrdered' | 'Ordered' | 'InStore' | 'InCutting' | 'Ready'
         }
         Insert: {
           add_value?: number | null
           advance_payment?: number | null
           balance?: number
           client_id: string
-          montage_status?: 'UnOrdered' | 'Ordered' | 'InStore' | 'InCutting' | 'Ready'
           created_at?: string
           delivery_status?: string
           discount_amount?: number | null
@@ -135,6 +134,7 @@ export type Database = {
           left_eye_axe?: number | null
           left_eye_cyl?: number | null
           left_eye_sph?: number | null
+          montage_status?: string
           right_eye_axe?: number | null
           right_eye_cyl?: number | null
           right_eye_sph?: number | null
@@ -143,7 +143,6 @@ export type Database = {
           total?: number
         }
         Update: {
-          montage_status?: 'UnOrdered' | 'Ordered' | 'InStore' | 'InCutting' | 'Ready'
           add_value?: number | null
           advance_payment?: number | null
           balance?: number
@@ -156,6 +155,7 @@ export type Database = {
           left_eye_axe?: number | null
           left_eye_cyl?: number | null
           left_eye_sph?: number | null
+          montage_status?: string
           right_eye_axe?: number | null
           right_eye_cyl?: number | null
           right_eye_sph?: number | null

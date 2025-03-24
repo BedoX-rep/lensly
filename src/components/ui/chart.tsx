@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   LineChart,
@@ -17,6 +16,7 @@ import {
   AreaChart,
   Area,
   ReferenceLine,
+  TooltipProps,
 } from "recharts";
 
 // Color palette
@@ -61,7 +61,7 @@ interface ChartProps {
   hideLegend?: boolean;
   renderLegend?: any;
   renderTooltip?: any;
-  customTooltip?: any;
+  customTooltip?: React.ComponentType<TooltipProps<any, any>>;
   onClick?: (data: any, index: number) => void;
   formatXAxisTick?: (value: any) => string;
 }
