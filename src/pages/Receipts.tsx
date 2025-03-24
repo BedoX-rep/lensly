@@ -216,12 +216,12 @@ const Receipts = () => {
         return "bg-gray-300 text-gray-800";
       case "Ordered":
         return "bg-blue-300 text-blue-800";
-      case "Instore":
-        return "bg-yellow-300 text-yellow-800";
+      case "InStore":
+        return "bg-amber-300 text-amber-800";
       case "InCutting":
-        return "bg-green-300 text-green-800";
+        return "bg-emerald-300 text-emerald-800";
       case "Ready":
-        return "bg-purple-300 text-purple-800";
+        return "bg-violet-300 text-violet-800";
       default:
         return "bg-gray-300 text-gray-800";
     }
