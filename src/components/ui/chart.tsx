@@ -61,7 +61,7 @@ interface ChartProps {
   hideLegend?: boolean;
   renderLegend?: any;
   renderTooltip?: any;
-  customTooltip?: React.ComponentType<TooltipProps<any, any>>;
+  customTooltip?: React.FC<TooltipProps<any, any>>;
   onClick?: (data: any, index: number) => void;
   formatXAxisTick?: (value: any) => string;
 }
@@ -131,7 +131,7 @@ const Chart = ({
               domain={allZeroValues ? [0, 10] : ['auto', 'auto']}
             />
             {showTooltip && (customTooltip ? (
-              <Tooltip content={customTooltip} />
+              <Tooltip content={(props) => customTooltip(props)} />
             ) : (
               <Tooltip />
             ))}
@@ -174,7 +174,7 @@ const Chart = ({
               domain={allZeroValues ? [0, 10] : ['auto', 'auto']}
             />
             {showTooltip && (customTooltip ? (
-              <Tooltip content={customTooltip} />
+              <Tooltip content={(props) => customTooltip(props)} />
             ) : (
               <Tooltip formatter={(value, name) => [value, name]} />
             ))}
@@ -219,7 +219,7 @@ const Chart = ({
               ))}
             </Pie>
             {showTooltip && (customTooltip ? (
-              <Tooltip content={customTooltip} />
+              <Tooltip content={(props) => customTooltip(props)} />
             ) : (
               <Tooltip />
             ))}
@@ -250,7 +250,7 @@ const Chart = ({
               domain={allZeroValues ? [0, 10] : ['auto', 'auto']}
             />
             {showTooltip && (customTooltip ? (
-              <Tooltip content={customTooltip} />
+              <Tooltip content={(props) => customTooltip(props)} />
             ) : (
               <Tooltip />
             ))}

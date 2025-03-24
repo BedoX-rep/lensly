@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Chart from "@/components/ui/chart";
@@ -12,7 +11,7 @@ import {
   eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval,
   getHours, getDate, getMonth, getDay
 } from "date-fns";
-import { utcToZonedTime } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 
 interface DashboardChartProps {
   title?: string;
@@ -33,7 +32,7 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
   const fetchRevenueData = async () => {
     setIsLoading(true);
     try {
-      const now = utcToZonedTime(new Date(), TIMEZONE);
+      const now = toZonedTime(new Date(), TIMEZONE);
       let start, end;
 
       switch (selectedTimeRange) {
@@ -71,12 +70,10 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
         return;
       }
 
-      // Process data based on time range
       const processedData = processDataByTimeRange(receipts || [], selectedTimeRange, start, end);
       setChartData(processedData);
     } catch (error) {
       console.error("Error in fetchRevenueData:", error);
-      // In case of error, set empty data structure
       setChartData(getEmptyDataStructure(selectedTimeRange));
     } finally {
       setIsLoading(false);
@@ -105,7 +102,6 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
   };
 
   const processHourlyData = (receipts: any[], start: Date, end: Date) => {
-    // Create array with all hours in the day
     const hours = eachHourOfInterval({ start, end });
     
     const hourlyData = hours.map(hourDate => {
@@ -117,9 +113,8 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
       };
     });
 
-    // Sum up receipt totals by hour
     receipts.forEach(receipt => {
-      const receiptDate = utcToZonedTime(parseISO(receipt.created_at), TIMEZONE);
+      const receiptDate = toZonedTime(parseISO(receipt.created_at), TIMEZONE);
       const hour = getHours(receiptDate);
       
       const dataIndex = hourlyData.findIndex(data => data.hour === hour);
@@ -132,7 +127,6 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
   };
 
   const processDailyData = (receipts: any[], start: Date, end: Date) => {
-    // Create array with all days in the week
     const days = eachDayOfInterval({ start, end });
 
     const dailyData = days.map(day => {
@@ -144,9 +138,8 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
       };
     });
 
-    // Sum up receipt totals by day
     receipts.forEach(receipt => {
-      const receiptDate = utcToZonedTime(parseISO(receipt.created_at), TIMEZONE);
+      const receiptDate = toZonedTime(parseISO(receipt.created_at), TIMEZONE);
       const dateStr = format(receiptDate, 'yyyy-MM-dd');
       
       const dataIndex = dailyData.findIndex(data => data.date === dateStr);
@@ -159,7 +152,6 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
   };
 
   const processDateData = (receipts: any[], start: Date, end: Date) => {
-    // Create array with all days in the month
     const dates = eachDayOfInterval({ start, end });
 
     const dateData = dates.map(date => {
@@ -171,9 +163,8 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
       };
     });
 
-    // Sum up receipt totals by date
     receipts.forEach(receipt => {
-      const receiptDate = utcToZonedTime(parseISO(receipt.created_at), TIMEZONE);
+      const receiptDate = toZonedTime(parseISO(receipt.created_at), TIMEZONE);
       const dateStr = format(receiptDate, 'yyyy-MM-dd');
       
       const dataIndex = dateData.findIndex(data => data.date === dateStr);
@@ -186,7 +177,6 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
   };
 
   const processMonthlyData = (receipts: any[], start: Date, end: Date) => {
-    // Create array with all months in the year
     const months = eachMonthOfInterval({ start, end });
 
     const monthlyData = months.map(month => {
@@ -198,9 +188,8 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
       };
     });
 
-    // Sum up receipt totals by month
     receipts.forEach(receipt => {
-      const receiptDate = utcToZonedTime(parseISO(receipt.created_at), TIMEZONE);
+      const receiptDate = toZonedTime(parseISO(receipt.created_at), TIMEZONE);
       const month = getMonth(receiptDate);
       
       const dataIndex = monthlyData.findIndex(data => data.month === month);
@@ -213,7 +202,7 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
   };
 
   const getEmptyDataStructure = (timeRange: TimeRange, start?: Date, end?: Date) => {
-    const now = utcToZonedTime(new Date(), TIMEZONE);
+    const now = toZonedTime(new Date(), TIMEZONE);
     
     start = start || (() => {
       switch (timeRange) {
@@ -252,7 +241,6 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
   };
 
   const formatXAxisTick = (value: string) => {
-    // Format the x-axis ticks based on time range
     if (!value) return '';
     
     return value;
