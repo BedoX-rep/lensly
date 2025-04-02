@@ -229,7 +229,7 @@ const Receipts = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col gap-6 animate-slide-up max-w-[1600px]">
+      <div className="flex flex-col gap-6 animate-slide-up w-full">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Receipts</h1>
