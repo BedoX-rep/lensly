@@ -33,7 +33,6 @@ const Receipts = () => {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [selectedReceiptId, setSelectedReceiptId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [grossIncome, setGrossIncome] = useState(0); // Added state for gross income
 
   const editForm = useForm({
     defaultValues: {
@@ -70,9 +69,6 @@ const Receipts = () => {
   const loadReceipts = async () => {
     const receiptsData = await getReceipts();
     setReceipts(receiptsData);
-    // Calculate gross income
-    const totalIncome = receiptsData.reduce((sum, receipt) => sum + receipt.total, 0);
-    setGrossIncome(totalIncome);
   };
 
   const filteredReceipts = receipts.filter(receipt =>
@@ -124,7 +120,7 @@ const Receipts = () => {
   };
 
   const montageStatuses = ['UnOrdered', 'Ordered', 'InStore', 'InCutting', 'Ready'] as const;
-
+  
   const handleMontageStatusUpdate = async (receiptId: string, newStatus: string) => {
     try {
       setIsLoading(true);
@@ -138,7 +134,7 @@ const Receipts = () => {
         toast.error('Failed to update status');
         return;
       }
-
+      
       toast.success(`Status updated to ${newStatus}`);
       await loadReceipts();
     } catch (error) {
@@ -277,17 +273,8 @@ const Receipts = () => {
           </div>
         </div>
 
-        {/* Overview Box */}
-        <div className="flex items-center justify-between p-4 bg-gray-100 rounded-lg shadow-sm">
-          <div>
-              <h2 className="text-lg font-medium">Overview</h2>
-              <p className="text-gray-600">Gross Income: {grossIncome.toFixed(2)} DH</p> {/* Display gross income */}
-          </div>
-      </div>
-
         <Card>
-          <CardContent className="p-6 overflow-x-auto"> {/* Added overflow-x-auto */}
-            <div className="min-w-[1200px]"> {/* Added min-width */}
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -439,7 +426,6 @@ const Receipts = () => {
                 )}
               </TableBody>
             </Table>
-            </div>
           </CardContent>
         </Card>
 

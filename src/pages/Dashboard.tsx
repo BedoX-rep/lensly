@@ -41,7 +41,7 @@ const Dashboard = () => {
 
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           <StatCard 
-            title="Gross Income" 
+            title="Total Revenue" 
             value={`DH${stats?.totalRevenue.toFixed(2) || '0.00'}`}
             icon={<DollarSign className="h-4 w-4 text-primary" />}
             description={`${stats?.timeRange !== 'all' ? `For ${stats?.timeRange}` : 'All time'}`}
