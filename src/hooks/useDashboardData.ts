@@ -36,7 +36,7 @@ export function useDashboardData(timeRange: TimeRange = 'all') {
       // Get total revenue within the time range
       const { data: revenue } = await supabase
         .from('receipts')
-        .select('total, created_at')
+        .select('total, cost, created_at')
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString());
       
