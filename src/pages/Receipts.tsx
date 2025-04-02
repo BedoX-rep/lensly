@@ -312,7 +312,20 @@ const Receipts = () => {
                         />
                       </TableCell>
                       <TableCell className="text-right">{receipt.total.toFixed(2)} DH</TableCell>
-                      <TableCell className="text-right">{receipt.cost.toFixed(2)} DH</TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="number"
+                          defaultValue={receipt.cost}
+                          className="w-24 text-right"
+                          onBlur={async (e) => {
+                            const success = await updateReceipt(receipt.id, { cost: parseFloat(e.target.value) });
+                            if (success) {
+                              loadReceipts();
+                              toast.success('Cost updated successfully');
+                            }
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>{receipt.advancePayment.toFixed(2)} DH</TableCell>
                       <TableCell>{receipt.balance.toFixed(2)} DH</TableCell>
                       <TableCell>

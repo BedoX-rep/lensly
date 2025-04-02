@@ -194,7 +194,9 @@ const DashboardChart = ({ title, description }: DashboardChartProps) => {
       
       const dataIndex = monthlyData.findIndex(data => data.month === month);
       if (dataIndex !== -1) {
-        monthlyData[dataIndex].revenue += parseFloat(receipt.total || 0);
+        const total = parseFloat(receipt.total || 0);
+        const cost = parseFloat(receipt.cost || 0);
+        monthlyData[dataIndex].revenue += (total - cost);
       }
     });
 
