@@ -278,17 +278,17 @@ const Receipts = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[100px]">Receipt #</TableHead>
-                  <TableHead className="w-[150px]">Client</TableHead>
+                  <TableHead className="w-[120px]">Receipt #</TableHead>
+                  <TableHead className="w-[180px]">Client</TableHead>
                   <TableHead className="w-[180px]">Date</TableHead>
-                  <TableHead className="text-right w-[100px]">Total</TableHead>
-                  <TableHead className="text-right w-[100px]">Cost</TableHead>
-                  <TableHead className="text-right w-[100px]">Advance</TableHead>
-                  <TableHead className="text-right w-[100px]">Balance</TableHead>
-                  <TableHead className="w-[120px]">Payment</TableHead>
-                  <TableHead className="w-[120px]">Delivery</TableHead>
-                  <TableHead className="w-[120px]">Montage</TableHead>
-                  <TableHead className="text-right w-[200px]">Actions</TableHead>
+                  <TableHead className="text-right w-[120px]">Total</TableHead>
+                  <TableHead className="text-right w-[120px]">Cost</TableHead>
+                  <TableHead className="text-right w-[120px]">Advance</TableHead>
+                  <TableHead className="text-right w-[120px]">Balance</TableHead>
+                  <TableHead className="w-[130px]">Payment</TableHead>
+                  <TableHead className="w-[130px]">Delivery</TableHead>
+                  <TableHead className="w-[130px]">Montage</TableHead>
+                  <TableHead className="text-right w-[300px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
