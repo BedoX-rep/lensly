@@ -778,6 +778,7 @@ const getReceipts = async () => {
     clientName: receipt.clients?.name || 'Unknown',
     date: receipt.created_at,
     total: receipt.total || 0,
+    cost: receipt.cost || 0,
     advancePayment: receipt.advance_payment || 0,
     balance: receipt.balance || 0,
     deliveryStatus: receipt.delivery_status || 'Undelivered',
