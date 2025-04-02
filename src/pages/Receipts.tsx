@@ -278,17 +278,17 @@ const Receipts = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Receipt #</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Cost</TableHead>
-                  <TableHead>Advance Paid</TableHead>
-                  <TableHead>Balance Due</TableHead>
-                  <TableHead>Payment Status</TableHead>
-                  <TableHead>Delivery Status</TableHead>
-                  <TableHead>Montage Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[100px]">Receipt #</TableHead>
+                  <TableHead className="w-[150px]">Client</TableHead>
+                  <TableHead className="w-[180px]">Date</TableHead>
+                  <TableHead className="text-right w-[100px]">Total</TableHead>
+                  <TableHead className="text-right w-[100px]">Cost</TableHead>
+                  <TableHead className="text-right w-[100px]">Advance</TableHead>
+                  <TableHead className="text-right w-[100px]">Balance</TableHead>
+                  <TableHead className="w-[120px]">Payment</TableHead>
+                  <TableHead className="w-[120px]">Delivery</TableHead>
+                  <TableHead className="w-[120px]">Montage</TableHead>
+                  <TableHead className="text-right w-[200px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -356,62 +356,66 @@ const Receipts = () => {
                         </select>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end items-center gap-0.5">
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8"
                             onClick={() => handleViewReceipt(receipt.id)}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8"
                             onClick={() => handleEditReceipt(receipt.id)}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3.5 w-3.5" />
                           </Button>
                           {receipt.status !== "Paid" && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-green-600 hover:text-green-800"
+                              className="h-8 w-8 text-green-600 hover:text-green-800"
                               onClick={() => handlePaymentStatusUpdate(receipt.id)}
                               title="Mark as Paid"
                             >
-                              <Check className="h-4 w-4" />
+                              <Check className="h-3.5 w-3.5" />
                             </Button>
                           )}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className={receipt.deliveryStatus === "Delivered" ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}
+                            className={`h-8 w-8 ${receipt.deliveryStatus === "Delivered" ? "text-blue-600 hover:text-blue-800" : "text-green-600 hover:text-green-800"}`}
                             onClick={() => handleDeliveryStatusUpdate(receipt.id, receipt.deliveryStatus)}
                             title={receipt.deliveryStatus === "Delivered" ? "Mark as Undelivered" : "Mark as Delivered"}
                           >
-                            <Truck className="h-4 w-4" />
+                            <Truck className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-destructive hover:text-destructive/80"
+                            className="h-8 w-8 text-destructive hover:text-destructive/80"
                             onClick={() => handleDeleteReceipt(receipt.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8"
                             onClick={() => handlePrintReceipt(receipt.id)}
                           >
-                            <Printer className="h-4 w-4" />
+                            <Printer className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8"
                             onClick={() => handleDownloadReceipt(receipt.id)}
                           >
-                            <Download className="h-4 w-4" />
+                            <Download className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </TableCell>
