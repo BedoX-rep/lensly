@@ -40,7 +40,7 @@ export function useDashboardData(timeRange: TimeRange = 'all') {
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString());
       
-      const totalRevenue = revenue?.reduce((sum, receipt) => sum + (receipt.total || 0), 0) || 0;
+      const totalRevenue = revenue?.reduce((sum, receipt) => sum + ((receipt.total || 0) - (receipt.cost || 0)), 0) || 0;
 
       // Get active clients count
       const { count: activeClients } = await supabase

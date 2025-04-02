@@ -316,7 +316,7 @@ export async function updateReceiptPaymentStatus(id: string) {
 
 export async function toggleDeliveryStatus(id: string, currentStatus: string) {
   const newStatus = currentStatus === 'Delivered' ? 'Undelivered' : 'Delivered';
-  
+
   const { data, error } = await supabase
     .from('receipts')
     .update({ delivery_status: newStatus })

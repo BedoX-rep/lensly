@@ -282,6 +282,7 @@ const Receipts = () => {
                   <TableHead>Client</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Cost</TableHead>
                   <TableHead>Advance Paid</TableHead>
                   <TableHead>Balance Due</TableHead>
                   <TableHead>Payment Status</TableHead>
@@ -311,6 +312,7 @@ const Receipts = () => {
                         />
                       </TableCell>
                       <TableCell className="text-right">{receipt.total.toFixed(2)} DH</TableCell>
+                      <TableCell className="text-right">{receipt.cost.toFixed(2)} DH</TableCell>
                       <TableCell>{receipt.advancePayment.toFixed(2)} DH</TableCell>
                       <TableCell>{receipt.balance.toFixed(2)} DH</TableCell>
                       <TableCell>
